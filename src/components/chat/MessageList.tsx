@@ -39,7 +39,6 @@ export function MessageList({
 
 	return (
 		<scrollbox
-			focused
 			style={{
 				rootOptions: {
 					height,

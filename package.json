@@ -12,6 +12,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
     "@types/bun": "latest",
+    "lefthook": "^1.13.5",
+    "lint-staged": "^16.2.3",
     "ultracite": "5.4.5",
     "winston": "^3.18.1"
   },
@@ -23,5 +25,10 @@
     "@opentui/core": "^0.1.25",
     "@opentui/react": "^0.1.25",
     "react": "^19.1.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
+      "bun x ultracite fix"
+    ]
   }
 }

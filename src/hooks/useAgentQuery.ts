@@ -81,8 +81,11 @@ export function useAgentQuery(
 			`Starting query - Has session: ${hasSession}, ID: ${sessionId}`
 		);
 
-		// Create NEW iterator every time we start (fixes restart issue)
-		messageIteratorRef.current = streamingInput.getAsyncIterator();
+		// Create iterator ONCE on first start only (maintain session continuity)
+		if (!messageIteratorRef.current) {
+			logger.info("Creating new message iterator");
+			messageIteratorRef.current = streamingInput.getAsyncIterator();
+		}
 
 		processQuery();
 	}, [agentService, streamingInput, processQuery]);
