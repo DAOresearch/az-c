@@ -3,7 +3,8 @@ const config = {
 		{
 			scenarioName: "Component default",
 			description: "Default state with placeholder children",
-			expectation: "",
+			expectation:
+				"Banner displays centered message 'What will you build?' with dark background and white text in 18px font",
 			params: {
 				message: "What will you build?",
 			},
