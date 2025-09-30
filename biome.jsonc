@@ -25,6 +25,12 @@
         "useBlockStatements": "off",
         "useNamingConvention": "off",
         "useFilenamingConvention": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off"
+      },
+      "nursery": {
+        "useMaxParams": "off"
       }
     }
   },

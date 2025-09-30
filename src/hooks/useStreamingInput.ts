@@ -1,10 +1,10 @@
 import type { SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
 import { useCallback, useRef } from "react";
+import { logger } from "@/services/logger";
 
 export type StreamingInputController = {
 	sendMessage: (content: string) => void;
 	getAsyncIterator: () => AsyncIterable<SDKUserMessage>;
-	setSessionId: (sessionId: string) => void;
 };
 
 /**
@@ -45,28 +45,24 @@ export function useStreamingInput(): StreamingInputController {
 	// Flag to indicate if this stream is closed/done
 	const doneRef = useRef(false);
 
-	// Session ID from the Claude Agent SDK - captured from first system message
-	const sessionIdRef = useRef<string>("");
-
-	/**
-	 * Updates the session ID to use for future messages.
-	 * Called when we receive the first system message from the SDK.
-	 */
-	const setSessionId = useCallback((sessionId: string) => {
-		sessionIdRef.current = sessionId;
-	}, []);
-
 	/**
 	 * Sends a new message to the queue.
 	 * If a consumer is waiting, it immediately notifies them.
 	 */
 	const sendMessage = useCallback((content: string) => {
-		if (doneRef.current) return;
+		if (doneRef.current) {
+			logger.error("Cannot send message: stream is done");
+			return;
+		}
 
-		// Create user message with current session ID
+		logger.info(
+			`Queueing message: "${content}", queue size before: ${queueRef.current.length}`
+		);
+
+		// Create user message (SDK handles session_id internally with resume option)
 		const message: SDKUserMessage = {
 			type: "user",
-			session_id: sessionIdRef.current,
+			session_id: "", // SDK will handle this based on resume option
 			message: {
 				role: "user",
 				content: [
@@ -81,12 +77,18 @@ export function useStreamingInput(): StreamingInputController {
 
 		// Add message to the queue
 		queueRef.current.push(message);
+		logger.info(`Message queued, queue size now: ${queueRef.current.length}`);
 
 		// If any consumer is waiting for a message, wake them up
 		// This resolves the Promise they're awaiting on
 		if (resolversRef.current.length > 0) {
+			logger.info(
+				`Notifying ${resolversRef.current.length} waiting consumer(s)`
+			);
 			const resolve = resolversRef.current.shift();
 			resolve?.();
+		} else {
+			logger.info("No consumers waiting");
 		}
 	}, []);
 
@@ -148,6 +150,5 @@ export function useStreamingInput(): StreamingInputController {
 	return {
 		sendMessage,
 		getAsyncIterator,
-		setSessionId,
 	};
 }

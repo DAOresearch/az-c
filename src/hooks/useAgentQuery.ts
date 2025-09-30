@@ -1,5 +1,8 @@
-import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import { useEffect, useRef, useState } from "react";
+import type {
+	SDKMessage,
+	SDKUserMessage,
+} from "@anthropic-ai/claude-agent-sdk";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "@/services/logger";
 import type { IAgentService } from "@/types/services";
 import type { StreamingInputController } from "./useStreamingInput";
@@ -23,55 +26,73 @@ export function useAgentQuery(
 	const [messages, setMessages] = useState<SDKMessage[]>([]);
 	const [isRunning, setIsRunning] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
-	const isStartedRef = useRef(false);
+	const isRunningRef = useRef(false);
+	const messageIteratorRef = useRef<AsyncIterable<SDKUserMessage> | null>(null);
 
-	const start = () => {
-		if (isStartedRef.current) return;
-		isStartedRef.current = true;
-		setIsRunning(true);
-		setError(null);
+	const handleMessage = useCallback((message: SDKMessage) => {
+		setMessages((prev) => [...prev, message]);
 
-		// Start processing in background
-		processQuery();
-	};
+		// Handle result messages
+		if (message.type === "result") {
+			isRunningRef.current = false;
+			setIsRunning(false);
+			logger.info("Query completed. Session can be resumed for next message.");
+		}
+	}, []);
 
-	const stop = () => {
-		agentService.stop();
-		setIsRunning(false);
-		isStartedRef.current = false;
-	};
+	const processQuery = useCallback(async () => {
+		if (!messageIteratorRef.current) {
+			throw new Error("Message iterator not initialized");
+		}
 
-	const processQuery = async () => {
+		const messageIterator = messageIteratorRef.current;
+
 		try {
-			// Get async iterator from streaming input
-			const messageIterator = streamingInput.getAsyncIterator();
-
-			// Start agent query with streaming input
+			// Start agent query with streaming input - service handles session internally
 			const queryIterator = agentService.startQuery(messageIterator);
 
 			// Process each message from the agent
 			for await (const message of queryIterator) {
-				setMessages((prev) => [...prev, message]);
-
-				// Capture session_id from the first system message
-				if (message.type === "system" && message.subtype === "init") {
-					streamingInput.setSessionId(message.session_id);
-				}
-
-				// Stop if result message received
-				if (message.type === "result") {
-					setIsRunning(false);
-					isStartedRef.current = false;
-					break;
-				}
+				handleMessage(message);
 			}
 		} catch (err) {
 			logger.error("Agent query error:", err);
 			setError(err instanceof Error ? err : new Error(String(err)));
+			isRunningRef.current = false;
 			setIsRunning(false);
-			isStartedRef.current = false;
 		}
-	};
+	}, [agentService, handleMessage]);
+
+	const start = useCallback(() => {
+		// Use ref for immediate check (no race condition)
+		if (isRunningRef.current) {
+			logger.info("Query already running, ignoring start");
+			return;
+		}
+
+		isRunningRef.current = true;
+		setIsRunning(true);
+		setError(null);
+
+		// Log session state
+		const hasSession = agentService.hasActiveSession();
+		const sessionId = agentService.getSessionId();
+		logger.info(
+			`Starting query - Has session: ${hasSession}, ID: ${sessionId}`
+		);
+
+		// MUST create fresh iterator each time (old one is exhausted after query completes)
+		logger.info("Creating fresh message iterator for new query");
+		messageIteratorRef.current = streamingInput.getAsyncIterator();
+
+		processQuery();
+	}, [agentService, streamingInput, processQuery]);
+
+	const stop = useCallback(() => {
+		agentService.stop();
+		isRunningRef.current = false;
+		setIsRunning(false);
+	}, [agentService]);
 
 	// Cleanup on unmount
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <cleanup on unmount>

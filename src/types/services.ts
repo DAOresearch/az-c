@@ -21,6 +21,18 @@ export type IAgentService = {
 	 * Stop the current query if running
 	 */
 	stop(): void;
+
+	/**
+	 * Get the current session ID if one exists
+	 * @returns Session ID or null if no active session
+	 */
+	getSessionId(): string | null;
+
+	/**
+	 * Check if there is an active session
+	 * @returns True if session exists, false otherwise
+	 */
+	hasActiveSession(): boolean;
 };
 
 /**
