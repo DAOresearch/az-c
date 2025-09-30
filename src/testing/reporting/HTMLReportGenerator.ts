@@ -200,20 +200,15 @@ export class HTMLReportGenerator implements IHTMLReportGenerator {
 
 	private buildScenarioCard(
 		result: EvaluationResult,
-		screenshotDir: string,
+		_screenshotDir: string,
 		config: ReportConfig
 	): string {
 		const statusClass = result.passed ? "passed" : "failed";
 		const statusIcon = result.passed ? "✓" : "✗";
 		const confidence = (result.confidence * PERCENTAGE_MULTIPLIER).toFixed(0);
 
-		// Find the screenshot file
-		const screenshotFilename = `${result.componentName}-${result.scenarioName}.png`;
-		const screenshotPath = path.join(screenshotDir, screenshotFilename);
-		const relativeScreenshotPath = path.relative(
-			path.dirname(screenshotPath),
-			screenshotPath
-		);
+		// Get screenshot path from result
+		const relativeScreenshotPath = `../${result.filePath}`;
 
 		return `
       <div class="scenario-card ${statusClass}">

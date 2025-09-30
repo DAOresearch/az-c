@@ -87,6 +87,7 @@ export class VisualTestEvaluator implements IVisualTestEvaluator {
 		return {
 			componentName: metadata.componentName,
 			scenarioName: metadata.scenarioName,
+			filePath: metadata.filePath,
 			passed: result.passed,
 			confidence: result.confidence,
 			reasoning: result.reasoning,
@@ -174,6 +175,7 @@ export class VisualTestEvaluator implements IVisualTestEvaluator {
 			return {
 				componentName: metadata.componentName,
 				scenarioName: metadata.scenarioName,
+				filePath: metadata.filePath,
 				passed: false,
 				confidence: 0,
 				reasoning: `Evaluation failed: ${error instanceof Error ? error.message : String(error)}`,

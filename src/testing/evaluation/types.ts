@@ -15,6 +15,7 @@ export type EvaluationCriteria = {
 export type EvaluationResult = {
 	componentName: string;
 	scenarioName: string;
+	filePath: string; // Path to screenshot file
 	passed: boolean;
 	confidence: number; // 0-1 scale
 	reasoning: string;
