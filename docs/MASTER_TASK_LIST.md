@@ -1,35 +1,35 @@
-# 📋 MASTER TASK LIST - HUMAN-IN-THE-LOOP IMPLEMENTATION
+# MASTER TASK LIST - HUMAN-IN-THE-LOOP IMPLEMENTATION
 ## Aztec Agent Chat - Refactoring with Manual Testing
 
 ---
 
-## 🎯 OVERVIEW
+## OVERVIEW
 
 This document provides a step-by-step task list for implementing the changes from the Codebase Audit. Each task includes:
 
-- ✅ **Atomic changes** - Small, reversible modifications
-- 🧪 **Human test scenarios** - Detailed testing instructions for you
-- ⏸️ **Explicit pause points** - Agent waits for your feedback
-- 🔄 **Rollback commands** - Quick recovery if something breaks
-- 📊 **Progress tracking** - Clear success/failure criteria
+- Atomic changes - small, reversible modifications
+- Human test scenarios - detailed testing instructions for you
+- Explicit pause points - agent waits for your feedback
+- Rollback commands - quick recovery if something breaks
+- Progress tracking - clear success/failure criteria
 
 ---
 
-## 🚦 HOW TO USE THIS DOCUMENT
+## HOW TO USE THIS DOCUMENT
 
 ### Agent's Role:
 1. Implement one subtask at a time
 2. Commit changes to git
 3. Provide detailed test instructions
 4. **WAIT** for your test results
-5. Proceed only after ✅ PASS
+5. Proceed only after PASS
 
 ### Your Role:
 1. Read the test scenario
 2. Run the app (`bun run dev`)
 3. Follow test steps exactly
 4. Observe behavior
-5. Report back: "✅ PASS" or "❌ FAIL: [what happened]"
+5. Report back: "PASS" or "FAIL: [what happened]"
 
 ### If Test Fails:
 ```bash
@@ -44,23 +44,33 @@ git reset --hard HEAD
 
 ---
 
-## 📊 PROGRESS TRACKER
+## DESIGN SYSTEM REFERENCE
 
-### Phase 1: Critical Fixes ✅ (4/4 complete)
-- ✅ Task 1.1: Fix Input Blocking Bug (3/3 subtasks)
-- ✅ Task 1.2: Move Session Management to Service (4/4 subtasks)
-- ✅ Task 1.3: Remove Redundant State (2/2 subtasks)
-- ✅ Task 1.4: Display User Messages in Chat (1/1 subtasks)
+All interface work must adhere to `docs/DESIGN_SYSTEM.md`. Before starting any UI task:
 
-### Phase 2: Architecture Improvements ⬜ (0/3 complete)
-- ⬜ Task 2.1: Add Tool Result Support (0/4 subtasks)
-- ⬜ Task 2.2: Create Theme System (0/3 subtasks)
-- ⬜ Task 2.3: Delete Dead Code (0/1 subtasks)
+- Review the component wireframes and state tables in the design system.
+- Confirm colors, spacing, and copy match the defined tokens and content standards.
+- Add new wireframes to `docs/DESIGN_SYSTEM.md` before implementing unlisted components.
 
-### Phase 3: Component Refactoring ⬜ (0/3 complete)
-- ⬜ Task 3.1: Create Atomic Components (0/5 subtasks)
-- ⬜ Task 3.2: Refactor ChatContainer (0/3 subtasks)
-- ⬜ Task 3.3: Improve Type Safety (0/3 subtasks)
+---
+
+## PROGRESS TRACKER
+
+### Phase 1: Critical Fixes [x] (4/4 complete)
+- [x] Task 1.1: Fix Input Blocking Bug (3/3 subtasks)
+- [x] Task 1.2: Move Session Management to Service (4/4 subtasks)
+- [x] Task 1.3: Remove Redundant State (2/2 subtasks)
+- [x] Task 1.4: Display User Messages in Chat (1/1 subtasks)
+
+### Phase 2: Architecture Improvements [ ] (0/3 complete)
+- [ ] Task 2.1: Add Tool Result Support (0/4 subtasks)
+- [ ] Task 2.2: Create Theme System (0/3 subtasks)
+- [ ] Task 2.3: Delete Dead Code (0/1 subtasks)
+
+### Phase 3: Component Refactoring [ ] (0/3 complete)
+- [ ] Task 3.1: Create Atomic Components (0/5 subtasks)
+- [ ] Task 3.2: Refactor ChatContainer (0/3 subtasks)
+- [ ] Task 3.3: Improve Type Safety (0/3 subtasks)
 
 **Total Progress: 10/28 subtasks complete**
 
@@ -68,7 +78,7 @@ git reset --hard HEAD
 
 # PHASE 1: CRITICAL FIXES
 
-## ⚠️ Pre-Phase Checklist
+## Pre-Phase Checklist
 - [ ] Current branch: `main` (or create feature branch)
 - [ ] No uncommitted changes: `git status` shows clean
 - [ ] App currently working: `bun run dev` starts successfully
@@ -76,7 +86,7 @@ git reset --hard HEAD
 
 ---
 
-## 🔴 TASK 1.1: Fix Input Blocking Bug
+## TASK 1.1: Fix Input Blocking Bug
 
 **Problem**: After sending first message and receiving response, input field becomes unresponsive for second message.
 
@@ -88,7 +98,7 @@ git reset --hard HEAD
 
 ---
 
-### Subtask 1.1.1: Backup Current State ⬜
+### Subtask 1.1.1: Backup Current State [ ]
 
 **What I'll Do**:
 - Create git commit of current working state
@@ -101,7 +111,7 @@ git commit -m "Backup: Working state before Phase 1 refactor"
 git tag pre-refactor-backup
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Test Steps**:
 1. Run: `git log --oneline -1`
@@ -109,23 +119,23 @@ git tag pre-refactor-backup
 3. Run: `git tag`
 4. Verify `pre-refactor-backup` tag exists
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - Commit created
 - Tag visible in `git tag` output
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Git errors
 - No commit/tag created
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 1.1.2: Simplify processQuery - Remove While Loop ⬜
+### Subtask 1.1.2: Simplify processQuery - Remove While Loop [ ]
 
 **What I'll Do**:
 - Remove the `while(true)` loop from `processQuery` function
@@ -191,7 +201,7 @@ git add src/hooks/useAgentQuery.ts
 git commit -m "refactor: Simplify processQuery - remove while loop"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -207,14 +217,14 @@ bun run dev
 6. Type second message: "test"
 7. **CRITICAL**: Check if you can type
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - App starts without errors
 - First message sends successfully
 - Agent responds
 - **Input may still be frozen** (expected - not fixed yet)
 - No crashes or errors
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - App won't start
 - Errors in console
 - First message doesn't send
@@ -225,15 +235,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 1.1.3: Move Iterator Creation Outside Loop ⬜
+### Subtask 1.1.3: Move Iterator Creation Outside Loop [ ]
 
 **What I'll Do**:
 - Move `getAsyncIterator()` call to `start()` function
@@ -288,7 +298,7 @@ git add src/hooks/useAgentQuery.ts
 git commit -m "fix: Move async iterator creation outside loop - fixes input blocking"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -306,33 +316,33 @@ bun run dev
 8. Try typing third message: "goodbye"
 9. Verify input still responsive
 
-**✅ Success Criteria**:
-- ✅ First message sends and responds
-- ✅ **Input field accepts typing after first response**
-- ✅ Second message sends and responds
-- ✅ Third message can be typed
-- ✅ No errors in logs
+**Success Criteria**:
+- [x] First message sends and responds
+- [x] **Input field accepts typing after first response**
+- [x] Second message sends and responds
+- [x] Third message can be typed
+- [x] No errors in logs
 
-**❌ Failure Signs**:
-- ❌ Input frozen after first response
-- ❌ Can't type second message
-- ❌ App crashes
-- ❌ Errors in console/logs
+**Failure Signs**:
+- FAIL Input frozen after first response
+- FAIL Can't type second message
+- FAIL App crashes
+- FAIL Errors in console/logs
 
 **Rollback**:
 ```bash
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS - Input now responsive!" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS - Input now responsive!" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR CRITICAL TEST RESULT**
+**Pause - Agent waits for critical test result**
 
 ---
 
-## 🔴 TASK 1.2: Move Session Management to Service
+## TASK 1.2: Move Session Management to Service
 
 **Problem**: React hook managing SDK state (session ID). Violates dependency inversion principle.
 
@@ -347,7 +357,7 @@ git reset --hard HEAD~1
 
 ---
 
-### Subtask 1.2.1: Update IAgentService Interface ⬜
+### Subtask 1.2.1: Update IAgentService Interface [ ]
 
 **What I'll Do**:
 - Add session management methods to `IAgentService` interface
@@ -377,18 +387,18 @@ git add src/types/services.ts
 git commit -m "feat: Add session management methods to IAgentService interface"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Test Steps**:
 1. Run: `bun run build` or `npx tsc --noEmit`
 2. Check for TypeScript errors
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - No TypeScript errors
 - Build succeeds
 - Interface updated
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - TypeScript compilation errors
 - Build fails
 
@@ -397,15 +407,15 @@ git commit -m "feat: Add session management methods to IAgentService interface"
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [error message]"
+**Report Back**: "PASS" or "FAIL: [error message]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 1.2.2: Implement Session Management in AgentService ⬜
+### Subtask 1.2.2: Implement Session Management in AgentService [ ]
 
 **What I'll Do**:
 - Add `sessionId` private field to `AgentService`
@@ -487,7 +497,7 @@ git add src/services/AgentService.ts
 git commit -m "feat: Implement session management in AgentService"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -502,13 +512,13 @@ bun run dev
 5. Wait for response
 6. Verify both messages work
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - App starts without errors
 - Messages send and receive responses
 - Log shows "Session captured by service"
 - No regressions in functionality
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - App crashes
 - Messages don't send
 - No session ID in logs
@@ -519,15 +529,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 1.2.3: Remove Session Tracking from useAgentQuery ⬜
+### Subtask 1.2.3: Remove Session Tracking from useAgentQuery [ ]
 
 **What I'll Do**:
 - Remove `sessionIdRef` from hook
@@ -583,7 +593,7 @@ git add src/hooks/useAgentQuery.ts
 git commit -m "refactor: Remove session tracking from hook - service owns it now"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -599,14 +609,14 @@ bun run dev
 6. Wait for response
 7. Verify session continuity (agent remembers context)
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - All messages send successfully
 - Agent responds to all messages
 - Session persists (context maintained)
 - Input remains responsive
 - No errors
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Session lost between messages
 - Agent forgets context
 - App crashes
@@ -617,15 +627,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 1.2.4: Verify Session Management ⬜
+### Subtask 1.2.4: Verify Session Management [ ]
 
 **What I'll Do**:
 - Add debug logging to verify service owns session
@@ -661,7 +671,7 @@ git add src/hooks/useAgentQuery.ts
 git commit -m "chore: Add session management verification logging"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -683,13 +693,13 @@ bun run dev
    - "Starting query - Has session: true, ID: [same-id]"
 6. Verify session ID is the same for both
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - First message: hasSession = false
 - After first message: session captured
 - Second message: hasSession = true with same ID
 - Session persists across messages
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Session ID changes between messages
 - hasSession always false
 - No session captured logs
@@ -699,15 +709,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS - Session managed by service!" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS - Session managed by service!" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-## 🔴 TASK 1.3: Remove Redundant State
+## TASK 1.3: Remove Redundant State
 
 **Problem**: Multiple refs tracking similar state (`hasEndedRef`, `isStartedRef`). Creates complexity and potential inconsistency.
 
@@ -719,7 +729,7 @@ git reset --hard HEAD~1
 
 ---
 
-### Subtask 1.3.1: Remove hasEndedRef ⬜
+### Subtask 1.3.1: Remove hasEndedRef [ ]
 
 **What I'll Do**:
 - Remove `hasEndedRef` ref declaration
@@ -771,7 +781,7 @@ git add src/hooks/useAgentQuery.ts
 git commit -m "refactor: Remove hasEndedRef - simplify state management"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -786,13 +796,13 @@ bun run dev
 5. Send message: "test 3"
 6. Verify all work correctly
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - All messages send successfully
 - Responses received for all
 - Can restart query after completion
 - No state inconsistencies
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Can't send second message
 - Query won't restart
 - State errors
@@ -802,15 +812,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 1.3.2: Remove isStartedRef and Use isRunning ⬜
+### Subtask 1.3.2: Remove isStartedRef and Use isRunning [ ]
 
 **What I'll Do**:
 - Remove `isStartedRef` ref
@@ -869,7 +879,7 @@ git add src/hooks/useAgentQuery.ts
 git commit -m "refactor: Remove isStartedRef - use isRunning as single source of truth"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -884,14 +894,14 @@ bun run dev
 5. Send third message after completion: "final"
 6. Verify all three messages processed correctly
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - First message sends and responds
 - Can queue second message while first processing
 - Third message works after completion
 - No duplicate processing
 - State transitions clean
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Multiple queries run simultaneously
 - State confusion
 - Messages lost
@@ -902,15 +912,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-## 🔴 TASK 1.4: Display User Messages in Chat
+## TASK 1.4: Display User Messages in Chat
 
 **Problem**: User messages are not displayed in the chat UI. Only assistant messages show up, making the conversation one-sided and confusing.
 
@@ -922,7 +932,7 @@ git reset --hard HEAD~1
 
 ---
 
-### Subtask 1.4.1: Add User Messages to Chat ⬜
+### Subtask 1.4.1: Add User Messages to Chat [ ]
 
 **What I'll Do**:
 - Expose a method from `useAgentQuery` to manually add user messages
@@ -995,7 +1005,7 @@ git commit -m "feat: Display user messages in chat UI
 - Fixes one-sided conversation display issue"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -1013,35 +1023,35 @@ bun run dev
 8. **VERIFY**: See "You: how are you" appear
 9. **VERIFY**: Both user and assistant messages visible
 
-**✅ Success Criteria**:
-- ✅ User messages appear immediately when sent
-- ✅ Assistant messages appear when received
-- ✅ Both roles visible in chat (You: and Assistant:)
-- ✅ Conversation flow is clear and easy to follow
+**Success Criteria**:
+- [x] User messages appear immediately when sent
+- [x] Assistant messages appear when received
+- [x] Both roles visible in chat (You: and Assistant:)
+- [x] Conversation flow is clear and easy to follow
 
-**❌ Failure Signs**:
-- ❌ Only assistant messages visible
-- ❌ User messages delayed or missing
-- ❌ Duplicate user messages
+**Failure Signs**:
+- FAIL Only assistant messages visible
+- FAIL User messages delayed or missing
+- FAIL Duplicate user messages
 
 **Rollback**:
 ```bash
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS - User messages visible!" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS - User messages visible!" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-## 🎉 PHASE 1 COMPLETE VERIFICATION
+## PHASE 1 COMPLETE VERIFICATION
 
 Before moving to Phase 2, let's verify all Phase 1 fixes:
 
-**🧪 COMPREHENSIVE PHASE 1 TEST**:
+**Comprehensive Phase 1 Test**:
 
 **Setup**:
 ```bash
@@ -1049,39 +1059,39 @@ bun run dev
 ```
 
 **Test Steps**:
-1. ✅ Send message: "What is 2+2?"
-2. ✅ Wait for response
-3. ✅ **Verify input responsive** (main bug fix)
-4. ✅ Send message: "What about 3+3?"
-5. ✅ Verify context maintained (session management)
-6. ✅ Send rapid messages: "test1", "test2", "test3"
-7. ✅ Verify all process correctly (state management)
-8. ✅ Check `combined.log` for session ID consistency
-9. ✅ Check no errors in logs
+1. Send message: "What is 2+2?"
+2. Wait for response
+3. **Verify input responsive** (main bug fix)
+4. Send message: "What about 3+3?"
+5. Verify context maintained (session management)
+6. Send rapid messages: "test1", "test2", "test3"
+7. Verify all process correctly (state management)
+8. Check `combined.log` for session ID consistency
+9. Check no errors in logs
 
-**✅ Success Criteria**:
-- ✅ Input never blocks (Issue #1 fixed)
-- ✅ Session managed by service (Issue #2 fixed)
-- ✅ Single state source (Issue #3 fixed)
-- ✅ User messages displayed in chat (Issue #4 fixed)
-- ✅ App stable and responsive
-- ✅ No errors or crashes
+**Success Criteria**:
+- [x] Input never blocks (Issue #1 fixed)
+- [x] Session managed by service (Issue #2 fixed)
+- [x] Single state source (Issue #3 fixed)
+- [x] User messages displayed in chat (Issue #4 fixed)
+- [x] App stable and responsive
+- [x] No errors or crashes
 
-**❌ If Any Failures**:
+**If Any Failures**:
 - Report which test failed
 - We'll debug before Phase 2
 
-**Report Back**: "✅ PHASE 1 COMPLETE - All tests pass!" or "❌ FAIL on test X: [details]"
+**Report Back**: "PHASE 1 COMPLETE - All tests pass!" or "FAIL on test X: [details]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR PHASE 1 VERIFICATION**
+**Pause - Agent waits for Phase 1 verification**
 
 ---
 
 # PHASE 2: ARCHITECTURE IMPROVEMENTS
 
-## ⚠️ Pre-Phase 2 Checklist
+## Pre-Phase 2 Checklist
 - [ ] Phase 1 complete and verified
 - [ ] All Phase 1 tests passing
 - [ ] Git history clean
@@ -1089,7 +1099,7 @@ bun run dev
 
 ---
 
-## 🟡 TASK 2.1: Add Tool Result Support
+## TASK 2.1: Add Tool Result Support
 
 **Problem**: App shows tool calls but not tool results. Users can't see what tools actually returned.
 
@@ -1109,7 +1119,7 @@ bun run dev
 
 ---
 
-### Subtask 2.1.1: Add ToolResultContent Type ⬜
+### Subtask 2.1.1: Add ToolResultContent Type [ ]
 
 **What I'll Do**:
 - Add `ToolResultContent` type definition
@@ -1148,7 +1158,7 @@ git add src/types/messages.ts
 git commit -m "feat: Add ToolResultContent type for tool execution results"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Test Steps**:
 1. Run: `npx tsc --noEmit`
@@ -1156,12 +1166,12 @@ git commit -m "feat: Add ToolResultContent type for tool execution results"
 3. Run: `bun run dev`
 4. Verify app still starts
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - No TypeScript errors
 - App starts normally
 - No runtime errors
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - TypeScript compilation errors
 - App won't start
 
@@ -1170,15 +1180,15 @@ git commit -m "feat: Add ToolResultContent type for tool execution results"
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [error]"
+**Report Back**: "PASS" or "FAIL: [error]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 2.1.2: Parse Tool Results in messageParser ⬜
+### Subtask 2.1.2: Parse Tool Results in messageParser [ ]
 
 **What I'll Do**:
 - Update `extractAssistantContent` to handle `tool_result` blocks
@@ -1227,7 +1237,7 @@ git add src/utils/messageParser.ts
 git commit -m "feat: Parse tool_result blocks from assistant messages"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -1241,13 +1251,13 @@ bun run dev
 4. Check `combined.log` for tool_result blocks (if any)
 5. Verify app doesn't crash
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - App still works
 - Tool calls shown (existing feature)
 - No errors parsing messages
 - App stable
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - App crashes when tool results received
 - Parsing errors in logs
 - Messages not displayed
@@ -1257,15 +1267,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 2.1.3: Create ToolResultRenderer Component ⬜
+### Subtask 2.1.3: Create ToolResultRenderer Component [ ]
 
 **What I'll Do**:
 - Create new `ToolResultRenderer.tsx` file
@@ -1334,7 +1344,7 @@ export class ToolResultRenderer implements IMessageRenderer {
           return (
             <box key={result.tool_use_id} style={{ flexDirection: "column", marginTop: 1 }}>
               <text fg={color}>
-                {result.is_error ? "❌ Error" : "✓ Success"}
+                {result.is_error ? "[FAIL] Error" : "[PASS] Success"}
               </text>
               <text>{textContent || "(no output)"}</text>
             </box>
@@ -1352,18 +1362,18 @@ git add src/components/messages/ToolResultRenderer.tsx
 git commit -m "feat: Create ToolResultRenderer component"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Test Steps**:
 1. Run: `npx tsc --noEmit`
 2. Verify no TypeScript errors
 3. Component not yet used - just checking it compiles
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - No TypeScript errors
 - File created successfully
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - TypeScript errors
 - Import errors
 
@@ -1372,15 +1382,15 @@ git commit -m "feat: Create ToolResultRenderer component"
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [error]"
+**Report Back**: "PASS" or "FAIL: [error]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 2.1.4: Register ToolResultRenderer ⬜
+### Subtask 2.1.4: Register ToolResultRenderer [ ]
 
 **What I'll Do**:
 - Import `ToolResultRenderer`
@@ -1413,7 +1423,7 @@ git add src/components/messages/MessageRenderer.tsx
 git commit -m "feat: Register ToolResultRenderer in renderer chain"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -1429,14 +1439,14 @@ bun run dev
 6. Verify tool output is displayed
 7. Check formatting is readable
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - Regular messages still work
 - Tool calls shown
-- **Tool results now visible** with ✓ or ❌
+- **Tool results now visible** with PASS or FAIL indicators
 - Output text displayed
 - Formatting clean
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Tool results not showing
 - App crashes on tool use
 - Formatting broken
@@ -1447,15 +1457,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS - Tool results now visible!" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS - Tool results now visible!" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-## 🟡 TASK 2.2: Create Theme System
+## TASK 2.2: Create Theme System
 
 **Problem**: Colors hardcoded throughout components. Hard to maintain, no consistency.
 
@@ -1469,7 +1479,7 @@ git reset --hard HEAD~1
 
 ---
 
-### Subtask 2.2.1: Create Theme Colors File ⬜
+### Subtask 2.2.1: Create Theme Colors File [ ]
 
 **What I'll Do**:
 - Create `src/theme/` directory
@@ -1524,19 +1534,19 @@ git add src/theme/colors.ts
 git commit -m "feat: Create centralized theme system with color constants"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Test Steps**:
 1. Run: `npx tsc --noEmit`
 2. Verify no errors
 3. File created in correct location
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - File created
 - No TypeScript errors
 - Types exported
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - TypeScript errors
 - Import issues
 
@@ -1545,15 +1555,15 @@ git commit -m "feat: Create centralized theme system with color constants"
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [error]"
+**Report Back**: "PASS" or "FAIL: [error]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 2.2.2: Update InputField to Use Theme ⬜
+### Subtask 2.2.2: Update InputField to Use Theme [ ]
 
 **What I'll Do**:
 - Import colors from theme
@@ -1593,7 +1603,7 @@ git add src/components/ui/InputField.tsx
 git commit -m "refactor: Use theme colors in InputField"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -1607,12 +1617,12 @@ bun run dev
 4. After response, border should return to blue
 5. Verify colors look correct
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - Input field renders correctly
 - Border colors change appropriately
 - No visual regressions
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Colors wrong
 - Border not showing
 - App crashes
@@ -1622,15 +1632,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-### Subtask 2.2.3: Update All Components to Use Theme ⬜
+### Subtask 2.2.3: Update All Components to Use Theme [ ]
 
 **What I'll Do**:
 - Update MessageList
@@ -1684,7 +1694,7 @@ git add src/components/
 git commit -m "refactor: Migrate all components to use centralized theme"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Setup**:
 ```bash
@@ -1702,13 +1712,13 @@ bun run dev
 5. Check all UI elements look correct
 6. No visual regressions
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - All colors consistent
 - UI looks good
 - No visual regressions
 - Theme applied everywhere
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - Colors wrong
 - Missing colors
 - UI broken
@@ -1718,15 +1728,15 @@ bun run dev
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS - Theme applied!" or "❌ FAIL: [what happened]"
+**Report Back**: "PASS - Theme applied!" or "FAIL: [what happened]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-## 🟡 TASK 2.3: Delete Dead Code
+## TASK 2.3: Delete Dead Code
 
 **Problem**: Unused types in `src/types/index.ts` misleading developers.
 
@@ -1738,7 +1748,7 @@ git reset --hard HEAD~1
 
 ---
 
-### Subtask 2.3.1: Remove Unused Types ⬜
+### Subtask 2.3.1: Remove Unused Types [ ]
 
 **What I'll Do**:
 - Remove `AppState` type
@@ -1764,7 +1774,7 @@ git add src/types/index.ts
 git commit -m "refactor: Remove unused type definitions (dead code)"
 ```
 
-**🧪 HUMAN TEST SCENARIO**:
+**Test Scenario**:
 
 **Test Steps**:
 1. Run: `npx tsc --noEmit`
@@ -1773,12 +1783,12 @@ git commit -m "refactor: Remove unused type definitions (dead code)"
 4. Verify app still works
 5. Send test messages
 
-**✅ Success Criteria**:
+**Success Criteria**:
 - No TypeScript errors
 - App works normally
 - No imports broken
 
-**❌ Failure Signs**:
+**Failure Signs**:
 - TypeScript errors
 - Import errors
 - App won't build
@@ -1788,17 +1798,17 @@ git commit -m "refactor: Remove unused type definitions (dead code)"
 git reset --hard HEAD~1
 ```
 
-**Report Back**: "✅ PASS" or "❌ FAIL: [error]"
+**Report Back**: "PASS" or "FAIL: [error]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+**Pause - Agent waits for test result**
 
 ---
 
-## 🎉 PHASE 2 COMPLETE VERIFICATION
+## PHASE 2 COMPLETE VERIFICATION
 
-**🧪 COMPREHENSIVE PHASE 2 TEST**:
+**Comprehensive Phase 2 Test**:
 
 **Setup**:
 ```bash
@@ -1806,27 +1816,27 @@ bun run dev
 ```
 
 **Test Steps**:
-1. ✅ Send message: "Read package.json file"
-2. ✅ Verify tool call shown
-3. ✅ **Verify tool result visible** (NEW)
-4. ✅ Check colors consistent throughout UI (NEW)
-5. ✅ Send multiple tool-using messages
-6. ✅ Verify all tool results display
-7. ✅ Check no TypeScript errors
-8. ✅ Verify no dead code warnings
+1. Send message: "Read package.json file"
+2. Verify tool call shown
+3. **Verify tool result visible** (NEW)
+4. Check colors consistent throughout UI (NEW)
+5. Send multiple tool-using messages
+6. Verify all tool results display
+7. Check no TypeScript errors
+8. Verify no dead code warnings
 
-**✅ Success Criteria**:
-- ✅ Tool results visible (Issue #7 fixed)
-- ✅ Centralized theme (Issue #6 fixed)
-- ✅ No dead code (Issue #5 fixed)
-- ✅ All Phase 1 fixes still working
-- ✅ App stable
+**Success Criteria**:
+- [x] Tool results visible (Issue #7 fixed)
+- [x] Centralized theme (Issue #6 fixed)
+- [x] No dead code (Issue #5 fixed)
+- [x] All Phase 1 fixes still working
+- [x] App stable
 
-**Report Back**: "✅ PHASE 2 COMPLETE!" or "❌ FAIL: [details]"
+**Report Back**: "PHASE 2 COMPLETE!" or "FAIL: [details]"
 
 ---
 
-⏸️ **AGENT PAUSES HERE - WAITING FOR PHASE 2 VERIFICATION**
+**Pause - Agent waits for Phase 2 verification**
 
 ---
 
@@ -1834,7 +1844,7 @@ bun run dev
 
 **Note**: Phase 3 is more extensive. Due to time constraints and complexity, I'll provide high-level task breakdown. These are "nice to have" improvements.
 
-## 🟢 TASK 3.1: Create Atomic Components
+## TASK 3.1: Create Atomic Components
 
 **Subtasks**:
 - 3.1.1: Create `atoms/Text.tsx` component
@@ -1847,7 +1857,7 @@ bun run dev
 
 ---
 
-## 🟢 TASK 3.2: Refactor ChatContainer
+## TASK 3.2: Refactor ChatContainer
 
 **Subtasks**:
 - 3.2.1: Move service creation to App.tsx
@@ -1858,7 +1868,7 @@ bun run dev
 
 ---
 
-## 🟢 TASK 3.3: Improve Type Safety
+## TASK 3.3: Improve Type Safety
 
 **Subtasks**:
 - 3.3.1: Import SDK types for content blocks
@@ -1869,7 +1879,7 @@ bun run dev
 
 ---
 
-## 📝 FINAL NOTES
+## FINAL NOTES
 
 ### Git Best Practices:
 ```bash
@@ -1898,17 +1908,17 @@ git checkout -b refactor/solid-improvements
 
 ---
 
-## 📊 TOTAL PROGRESS TRACKER
+## TOTAL PROGRESS TRACKER
 
 ```
-Phase 1: [▓▓▓▓▓▓▓▓▓▓] 100% COMPLETE ✅
-Phase 2: [▓▓▓▓▓▓▓▓░░]  80% COMPLETE ⏳
-Phase 3: [░░░░░░░░░░]   0% NOT STARTED ⬜
+Phase 1: [##########] 100% complete [done]
+Phase 2: [########..]  80% complete [in progress]
+Phase 3: [..........]   0% not started [pending]
 
 Total: 27 subtasks
-  ✅ Complete: 0
-  ⏳ In Progress: 0
-  ⬜ Not Started: 27
+  Complete: 0
+  In Progress: 0
+  Not Started: 27
 ```
 
 ---
