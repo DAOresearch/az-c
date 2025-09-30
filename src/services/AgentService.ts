@@ -24,7 +24,8 @@ export class AgentService implements IAgentService {
 	}
 
 	async *startQuery(
-		messageIterator: AsyncIterable<SDKUserMessage>
+		messageIterator: AsyncIterable<SDKUserMessage>,
+		sessionId?: string
 	): AsyncIterable<SDKMessage> {
 		// Create new abort controller for this query
 		this.abortController = new AbortController();
@@ -40,6 +41,8 @@ export class AgentService implements IAgentService {
 					cwd: this.config.cwd,
 					abortController: this.abortController,
 					permissionMode: "bypassPermissions",
+					// Resume session if sessionId is provided
+					...(sessionId && { resume: sessionId }),
 				},
 			});
 

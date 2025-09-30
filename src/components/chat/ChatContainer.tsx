@@ -43,7 +43,14 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 	// Handle user message submission
 	const handleSubmit = (message: string) => {
 		if (!message.trim()) return;
+		logger.info(`Submitting message: ${message}, isRunning: ${isRunning}`);
 		streamingInput.sendMessage(message);
+
+		// If the query isn't running (e.g., after it ended), restart it
+		if (!isRunning) {
+			logger.info("Query not running, restarting...");
+			start();
+		}
 	};
 
 	// Check if agent is actively working
@@ -69,7 +76,7 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 
 			{/* Input field - only top/bottom borders */}
 			<InputField
-				disabled={!isRunning && messages.length > 0}
+				disabled={false} // Always allow input
 				onSubmit={handleSubmit}
 				placeholder="Type your message and press Enter..."
 			/>

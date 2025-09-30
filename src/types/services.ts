@@ -11,10 +11,12 @@ export type IAgentService = {
 	/**
 	 * Start the agent query with streaming input
 	 * @param messageIterator - Async iterable of user messages
+	 * @param sessionId - Optional session ID to resume
 	 * @returns Async iterable of SDK messages
 	 */
 	startQuery(
-		messageIterator: AsyncIterable<SDKUserMessage>
+		messageIterator: AsyncIterable<SDKUserMessage>,
+		sessionId?: string
 	): AsyncIterable<SDKMessage>;
 
 	/**
