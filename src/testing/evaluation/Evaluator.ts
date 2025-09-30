@@ -205,16 +205,16 @@ export class Evaluator implements IVisualTestEvaluator {
 			`Loaded ${metadata.length} screenshots to evaluate`
 		);
 
-		// Evaluate each screenshot
-		const results: EvaluationResult[] = [];
-		for (const meta of metadata) {
-			const screenshotPath = path.join(
-				screenshotDir,
-				path.basename(meta.filePath)
-			);
-			const result = await this.evaluateScreenshot(meta, screenshotPath);
-			results.push(result);
-		}
+		// Evaluate all screenshots in parallel
+		const results = await Promise.all(
+			metadata.map((meta) => {
+				const screenshotPath = path.join(
+					screenshotDir,
+					path.basename(meta.filePath)
+				);
+				return this.evaluateScreenshot(meta, screenshotPath);
+			})
+		);
 
 		this.evaluatorLogger.info(
 			`Batch evaluation complete: ${results.length} results`
