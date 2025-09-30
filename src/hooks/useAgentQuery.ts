@@ -27,12 +27,11 @@ export function useAgentQuery(
 	const [isRunning, setIsRunning] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
 	const isStartedRef = useRef(false);
-	const hasEndedRef = useRef(false);
 	const messageIteratorRef = useRef<AsyncIterable<SDKUserMessage> | null>(null);
 
 	const start = () => {
-		// Allow restart if the previous query has ended
-		if (isStartedRef.current && !hasEndedRef.current) return;
+		// Allow restart if query not currently running
+		if (isStartedRef.current) return;
 
 		isStartedRef.current = true;
 		setIsRunning(true);
@@ -66,7 +65,6 @@ export function useAgentQuery(
 		if (message.type === "result") {
 			setIsRunning(false);
 			isStartedRef.current = false;
-			hasEndedRef.current = true;
 			logger.info("Query completed. Session can be resumed for next message.");
 		}
 	};
