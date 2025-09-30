@@ -36,9 +36,10 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 	if (error) logger.error(error);
 
 	// Auto-start the agent query on mount
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Only run once on mount
 	useEffect(() => {
 		start();
-	}, [start]);
+	}, []);
 
 	// Handle user message submission
 	const handleSubmit = (message: string) => {
