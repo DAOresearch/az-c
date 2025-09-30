@@ -1,21 +1,25 @@
 /**
- * Visual Test Pipeline - Orchestrates complete visual testing workflow
+ * Test Pipeline - Orchestrates complete testing workflow
  */
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { AgentService } from "@/services/AgentService";
-import { PATHS } from "@/testing/config/paths";
-import { visualTestLogger } from "@/testing/visualTestLogger";
-import type { TestSummary } from "./evaluation/TestResultCollector";
-import { TestResultCollector } from "./evaluation/TestResultCollector";
-import type { EvaluationCriteria } from "./evaluation/types";
-import { VisualTestEvaluator } from "./evaluation/VisualTestEvaluator";
-import type { ReportConfig } from "./reporting/HTMLReportGenerator";
-import { HTMLReportGenerator } from "./reporting/HTMLReportGenerator";
-import { ReportManager } from "./reporting/ReportManager";
+import { FILES, PATHS } from "@/testing/config/paths";
+import { logger } from "@/testing/logger";
+import { runCapture } from "./capture";
+import {
+	Collector,
+	type EvaluationCriteria,
+	Evaluator,
+	type TestSummary,
+} from "./evaluation";
+import {
+	HTMLReportGenerator,
+	type ReportConfig,
+	ReportManager,
+} from "./reporting";
 import type { CaptureResult } from "./types";
-import { runVisualTests } from "./visualTestRunner";
 
 export type PipelineConfig = {
 	screenshotDir?: string;
@@ -44,69 +48,67 @@ const PERCENTAGE_MULTIPLIER = 100;
 const MILLISECONDS_TO_SECONDS = 1000;
 
 /**
- * Main pipeline function that orchestrates the complete visual testing workflow
+ * Main pipeline function that orchestrates the complete testing workflow
  */
-export async function runVisualTestPipeline(
+export async function runPipeline(
 	config?: PipelineConfig
 ): Promise<PipelineResult> {
 	const errors: Error[] = [];
 
 	try {
-		visualTestLogger.phase("🚀", "Starting Visual Test Pipeline");
+		logger.phase("🚀", "Starting Test Pipeline");
 
 		// Phase 1: Capture or load existing screenshots
-		visualTestLogger.phase("📸", "Phase 1: Screenshot Capture");
+		logger.phase("📸", "Phase 1: Screenshot Capture");
 		const captureResult = await handleScreenshotPhase(config);
-		visualTestLogger.step(
+		logger.step(
 			`Captured ${captureResult.totalScenarios} screenshots from ${captureResult.totalComponents} components`,
 			{ completed: true }
 		);
 
 		// Phase 2: Initialize services
-		visualTestLogger.phase("🔧", "Phase 2: Service Initialization");
+		logger.phase("🔧", "Phase 2: Service Initialization");
 		const agentService = new AgentService();
-		const evaluator = new VisualTestEvaluator(
+		const evaluator = new Evaluator(
 			agentService,
 			config?.evaluationCriteria
 				? { criteria: config.evaluationCriteria }
 				: undefined
 		);
-		const collector = new TestResultCollector();
+		const collector = new Collector();
 		const generator = new HTMLReportGenerator(config?.reportConfig);
-		visualTestLogger.step("Services initialized", { completed: true });
+		logger.step("Services initialized", { completed: true });
 
 		// Phase 3: Evaluate all screenshots
-		visualTestLogger.phase("🤖", "Phase 3: AI Evaluation");
-		const metadataPath = path.join(captureResult.outputDir, "metadata.json");
-		visualTestLogger.step(
-			`Evaluating screenshots from: ${captureResult.outputDir}`
-		);
+		logger.phase("🤖", "Phase 3: AI Evaluation");
+		const metadataPath = path.join(captureResult.outputDir, FILES.metadata);
+		logger.step(`Evaluating screenshots from: ${captureResult.outputDir}`);
 
 		const results = await evaluator.evaluateBatch(
 			metadataPath,
 			captureResult.outputDir
 		);
-		visualTestLogger.step(`Evaluated ${results.length} screenshots`, {
+		logger.step(`Evaluated ${results.length} screenshots`, {
 			completed: true,
 		});
 
 		// Phase 4: Collect results
-		visualTestLogger.phase("📊", "Phase 4: Result Collection");
+		logger.phase("📊", "Phase 4: Result Collection");
 		for (const result of results) {
 			collector.addResult(result);
 		}
 		const summary = collector.getSummary();
-		visualTestLogger.step(
+		logger.step(
 			`Pass Rate: ${(summary.passRate * PERCENTAGE_MULTIPLIER).toFixed(1)}%`,
 			{ completed: true }
 		);
-		visualTestLogger.step(
+		logger.step(
 			`Average Confidence: ${(summary.averageConfidence * PERCENTAGE_MULTIPLIER).toFixed(1)}%`,
 			{ completed: true }
 		);
 
 		// Phase 5: Generate HTML report
-		visualTestLogger.phase("📄", "Phase 5: Report Generation");
+		logger.phase("📄", "Phase 5: Report Generation");
 		const html = await generator.generateReport(
 			summary,
 			collector.getAllResults(),
@@ -115,7 +117,7 @@ export async function runVisualTestPipeline(
 		);
 
 		// Phase 6: Save outputs (with versioning)
-		visualTestLogger.phase("💾", "Phase 6: Save Outputs");
+		logger.phase("💾", "Phase 6: Save Outputs");
 		const outputDir = config?.outputDir || DEFAULT_OUTPUT_DIR;
 
 		// Initialize ReportManager
@@ -128,30 +130,30 @@ export async function runVisualTestPipeline(
 		const { runId, runDir, latestDir } = await reportManager.createRun(
 			config?.runName
 		);
-		visualTestLogger.step(`Run ID: ${runId}`, { completed: true });
+		logger.step(`Run ID: ${runId}`, { completed: true });
 
 		// Save to latest (always at root)
-		const latestReportPath = path.join(latestDir, "index.html");
-		const latestJsonPath = path.join(latestDir, "results.json");
+		const latestReportPath = path.join(latestDir, FILES.reportIndex);
+		const latestJsonPath = path.join(latestDir, FILES.reportResults);
 
 		await generator.saveReport(html, latestReportPath);
-		visualTestLogger.step(`Latest report saved to: ${latestReportPath}`, {
+		logger.step(`Latest report saved to: ${latestReportPath}`, {
 			completed: true,
 		});
 
 		const { writeFile } = await import("node:fs/promises");
 		await writeFile(latestJsonPath, collector.exportToJSON(), "utf-8");
-		visualTestLogger.step(`Latest JSON saved to: ${latestJsonPath}`, {
+		logger.step(`Latest JSON saved to: ${latestJsonPath}`, {
 			completed: true,
 		});
 
 		// Save to versioned run directory
-		const versionedReportPath = path.join(runDir, "index.html");
-		const versionedJsonPath = path.join(runDir, "results.json");
+		const versionedReportPath = path.join(runDir, FILES.reportIndex);
+		const versionedJsonPath = path.join(runDir, FILES.reportResults);
 
 		await generator.saveReport(html, versionedReportPath);
 		await writeFile(versionedJsonPath, collector.exportToJSON(), "utf-8");
-		visualTestLogger.step(`Versioned report saved to: ${runDir}`, {
+		logger.step(`Versioned report saved to: ${runDir}`, {
 			completed: true,
 		});
 
@@ -166,7 +168,7 @@ export async function runVisualTestPipeline(
 			passRate: summary.passRate,
 			duration: summary.duration,
 		});
-		visualTestLogger.step("Run metadata saved", { completed: true });
+		logger.step("Run metadata saved", { completed: true });
 
 		// Cleanup old runs (unless explicitly skipped)
 		if (!config?.skipCleanup) {
@@ -174,13 +176,13 @@ export async function runVisualTestPipeline(
 		}
 
 		// Open report in browser
-		visualTestLogger.phase("🌐", "Phase 7: Opening Report");
+		logger.phase("🌐", "Phase 7: Opening Report");
 		await openReportInBrowser(latestReportPath);
-		visualTestLogger.step("Report opened in browser", { completed: true });
+		logger.step("Report opened in browser", { completed: true });
 
 		// Final summary
 		const success = summary.passRate >= PASS_RATE_THRESHOLD;
-		visualTestLogger.summary(
+		logger.summary(
 			success
 				? "✅ Pipeline completed successfully!"
 				: "⚠️  Pipeline completed with failures",
@@ -198,7 +200,7 @@ export async function runVisualTestPipeline(
 			errors: errors.length > 0 ? errors : undefined,
 		};
 	} catch (error) {
-		visualTestLogger.error("❌ Pipeline failed:", error);
+		logger.error("❌ Pipeline failed:", error);
 		errors.push(error instanceof Error ? error : new Error(String(error)));
 
 		throw error;
@@ -212,14 +214,14 @@ function handleScreenshotPhase(
 	config?: PipelineConfig
 ): Promise<CaptureResult> {
 	if (config?.skipScreenshots) {
-		visualTestLogger.step("Skipping capture, loading existing screenshots...");
+		logger.step("Skipping capture, loading existing screenshots...");
 		return loadExistingScreenshots(
 			config.screenshotDir || DEFAULT_SCREENSHOT_DIR
 		);
 	}
 
-	visualTestLogger.step("Capturing new screenshots...");
-	return runVisualTests();
+	logger.step("Capturing new screenshots...");
+	return runCapture();
 }
 
 /**
@@ -228,7 +230,7 @@ function handleScreenshotPhase(
 async function loadExistingScreenshots(
 	screenshotDir: string
 ): Promise<CaptureResult> {
-	const metadataPath = path.join(screenshotDir, "metadata.json");
+	const metadataPath = path.join(screenshotDir, FILES.metadata);
 
 	try {
 		const metadataContent = await readFile(metadataPath, "utf-8");
@@ -283,7 +285,7 @@ async function openReportInBrowser(reportPath: string): Promise<void> {
 	try {
 		await execAsync(command);
 	} catch (error) {
-		visualTestLogger.warn(
+		logger.warn(
 			`Could not open browser automatically: ${error instanceof Error ? error.message : String(error)}`
 		);
 	}

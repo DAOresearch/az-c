@@ -4,7 +4,8 @@
 
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { visualTestLogger } from "@/testing/visualTestLogger";
+import { DIRS, FILES, PATHS } from "@/testing/config/paths";
+import { logger } from "@/testing/logger";
 
 export type RunMetadata = {
 	runId: string; // Timestamp-based ID: YYYY-MM-DD_HHMMSS
@@ -24,13 +25,11 @@ export type ReportManagerConfig = {
 };
 
 const DEFAULT_CONFIG: ReportManagerConfig = {
-	baseDir: "reports",
+	baseDir: PATHS.reports,
 	keepHistory: 10,
 	namedRuns: [],
 };
 
-const RUNS_DIR = "runs";
-const RUNS_MANIFEST = "runs.json";
 const TIMESTAMP_FORMAT_LENGTH = 19;
 
 /**
@@ -67,7 +66,7 @@ export class ReportManager {
 	 * Gets the directory path for a specific run
 	 */
 	getRunDir(runId: string): string {
-		return path.join(this.config.baseDir, RUNS_DIR, runId);
+		return path.join(this.config.baseDir, DIRS.runs, runId);
 	}
 
 	/**
@@ -83,7 +82,7 @@ export class ReportManager {
 		// Create run directory
 		await mkdir(runDir, { recursive: true });
 
-		visualTestLogger.indent(`Created run directory: ${runDir}`);
+		logger.indent(`Created run directory: ${runDir}`);
 
 		return { runId, runDir, latestDir };
 	}
@@ -92,7 +91,7 @@ export class ReportManager {
 	 * Saves run metadata to manifest
 	 */
 	async saveRunMetadata(metadata: RunMetadata): Promise<void> {
-		const manifestPath = path.join(this.config.baseDir, RUNS_MANIFEST);
+		const manifestPath = path.join(this.config.baseDir, FILES.runsManifest);
 
 		let manifest: RunMetadata[] = [];
 
@@ -113,16 +112,14 @@ export class ReportManager {
 		// Save updated manifest
 		await writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf-8");
 
-		visualTestLogger.indent(
-			`Updated runs manifest with run: ${metadata.runId}`
-		);
+		logger.indent(`Updated runs manifest with run: ${metadata.runId}`);
 	}
 
 	/**
 	 * Gets all run metadata from manifest
 	 */
 	async getRunHistory(): Promise<RunMetadata[]> {
-		const manifestPath = path.join(this.config.baseDir, RUNS_MANIFEST);
+		const manifestPath = path.join(this.config.baseDir, FILES.runsManifest);
 
 		try {
 			const content = await readFile(manifestPath, "utf-8");
@@ -138,7 +135,7 @@ export class ReportManager {
 	 */
 	async cleanupOldRuns(): Promise<void> {
 		const history = await this.getRunHistory();
-		const runsDir = path.join(this.config.baseDir, RUNS_DIR);
+		const runsDir = path.join(this.config.baseDir, DIRS.runs);
 
 		// Separate named runs from regular runs
 		const namedRuns = history.filter((run) => run.name);
@@ -148,11 +145,11 @@ export class ReportManager {
 		const runsToDelete = regularRuns.slice(this.config.keepHistory);
 
 		if (runsToDelete.length === 0) {
-			visualTestLogger.indent("No old runs to clean up");
+			logger.indent("No old runs to clean up");
 			return;
 		}
 
-		visualTestLogger.indent(
+		logger.indent(
 			`Cleaning up ${runsToDelete.length} old runs (keeping ${this.config.keepHistory})`
 		);
 
@@ -161,9 +158,9 @@ export class ReportManager {
 			const runDir = path.join(runsDir, run.runId);
 			try {
 				await rm(runDir, { recursive: true, force: true });
-				visualTestLogger.indent(`Deleted old run: ${run.runId}`);
+				logger.indent(`Deleted old run: ${run.runId}`);
 			} catch (error) {
-				visualTestLogger.warn(`Failed to delete run ${run.runId}:`, error);
+				logger.warn(`Failed to delete run ${run.runId}:`, error);
 			}
 		}
 
@@ -174,14 +171,14 @@ export class ReportManager {
 		];
 		updatedHistory.sort((a, b) => b.timestamp - a.timestamp);
 
-		const manifestPath = path.join(this.config.baseDir, RUNS_MANIFEST);
+		const manifestPath = path.join(this.config.baseDir, FILES.runsManifest);
 		await writeFile(
 			manifestPath,
 			JSON.stringify(updatedHistory, null, 2),
 			"utf-8"
 		);
 
-		visualTestLogger.indent("Cleanup complete");
+		logger.indent("Cleanup complete");
 	}
 
 	/**
@@ -204,14 +201,14 @@ export class ReportManager {
 		const history = await this.getRunHistory();
 		const updatedHistory = history.filter((run) => run.runId !== runId);
 
-		const manifestPath = path.join(this.config.baseDir, RUNS_MANIFEST);
+		const manifestPath = path.join(this.config.baseDir, FILES.runsManifest);
 		await writeFile(
 			manifestPath,
 			JSON.stringify(updatedHistory, null, 2),
 			"utf-8"
 		);
 
-		visualTestLogger.indent(`Deleted run: ${runId}`);
+		logger.indent(`Deleted run: ${runId}`);
 	}
 
 	/**
@@ -219,7 +216,7 @@ export class ReportManager {
 	 */
 	async getRun(runId: string): Promise<string | null> {
 		const runDir = this.getRunDir(runId);
-		const runsDir = path.join(this.config.baseDir, RUNS_DIR);
+		const runsDir = path.join(this.config.baseDir, DIRS.runs);
 
 		try {
 			const runs = await readdir(runsDir);
@@ -237,12 +234,12 @@ export class ReportManager {
 	 * Copies latest report to versioned run directory
 	 */
 	async archiveCurrentRun(runId: string): Promise<void> {
-		const latestHtml = path.join(this.config.baseDir, "index.html");
-		const latestJson = path.join(this.config.baseDir, "results.json");
+		const latestHtml = path.join(this.config.baseDir, FILES.reportIndex);
+		const latestJson = path.join(this.config.baseDir, FILES.reportResults);
 
 		const runDir = this.getRunDir(runId);
-		const archivedHtml = path.join(runDir, "index.html");
-		const archivedJson = path.join(runDir, "results.json");
+		const archivedHtml = path.join(runDir, FILES.reportIndex);
+		const archivedJson = path.join(runDir, FILES.reportResults);
 
 		// Copy files
 		try {
@@ -252,9 +249,9 @@ export class ReportManager {
 			const jsonContent = await readFile(latestJson, "utf-8");
 			await writeFile(archivedJson, jsonContent, "utf-8");
 
-			visualTestLogger.indent(`Archived run to: ${runDir}`);
+			logger.indent(`Archived run to: ${runDir}`);
 		} catch (error) {
-			visualTestLogger.error("Failed to archive run:", error);
+			logger.error("Failed to archive run:", error);
 			throw error;
 		}
 	}

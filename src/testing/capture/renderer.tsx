@@ -2,21 +2,21 @@ import { render } from "@opentui/react";
 import type { ReactNode } from "react";
 import { testLogger } from "@/services/logger";
 
-export type HarnessScenario = {
+export type RenderScenario = {
 	scenarioName: string;
 	description: string;
 	render: () => ReactNode;
 };
 
 /**
- * Minimal harness to render a single scenario at a time.
+ * Minimal renderer to display a single scenario at a time.
  * Logs instructions then mounts the provided React element using @opentui/react.
  */
-export function runHarness({
+export function renderComponent({
 	scenarioName,
 	description,
 	render: mount,
-}: HarnessScenario) {
+}: RenderScenario) {
 	const logger = testLogger.child({ name: scenarioName });
 
 	logger.info({ Scenario: scenarioName });

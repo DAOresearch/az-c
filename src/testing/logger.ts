@@ -1,5 +1,5 @@
 /**
- * Visual Test Logger - Clean console output for visual testing pipeline
+ * Test Logger - Clean console output for testing pipeline
  * Uses Winston for structured logging with beautiful formatting
  */
 
@@ -142,9 +142,9 @@ const colorMessage = (message: string, level: string): string => {
 };
 
 /**
- * Custom format for visual test pipeline output
+ * Custom format for test pipeline output
  */
-const visualTestFormat = winston.format.printf((info) => {
+const testFormat = winston.format.printf((info) => {
 	const {
 		level,
 		message,
@@ -177,15 +177,12 @@ const visualTestFormat = winston.format.printf((info) => {
 });
 
 /**
- * Create the visual test logger instance
+ * Create the test logger instance
  */
-const createVisualTestLogger = () => {
+const createTestLogger = () => {
 	const logger = winston.createLogger({
 		level: "info",
-		format: winston.format.combine(
-			winston.format.timestamp(),
-			visualTestFormat
-		),
+		format: winston.format.combine(winston.format.timestamp(), testFormat),
 		transports: [
 			new winston.transports.Console({
 				stderrLevels: ["error"],
@@ -201,7 +198,7 @@ const createVisualTestLogger = () => {
 		},
 	});
 
-	// Add custom methods for visual test specific logging
+	// Add custom methods for test specific logging
 	const extendedLogger = Object.assign(logger, {
 		/**
 		 * Log a major phase of the pipeline
@@ -271,7 +268,7 @@ const createVisualTestLogger = () => {
 };
 
 // Export singleton instance
-export const visualTestLogger = createVisualTestLogger();
+export const logger = createTestLogger();
 
 // Export type for proper typing
-export type VisualTestLogger = ReturnType<typeof createVisualTestLogger>;
+export type TestLogger = ReturnType<typeof createTestLogger>;

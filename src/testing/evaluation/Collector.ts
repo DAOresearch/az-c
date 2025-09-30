@@ -49,7 +49,7 @@ export type ITestResultCollector = {
 	exportToJSON(): string;
 };
 
-export class TestResultCollector implements ITestResultCollector {
+export class Collector implements ITestResultCollector {
 	private readonly resultsByComponent = new Map<string, EvaluationResult[]>();
 	private readonly startTime: number;
 

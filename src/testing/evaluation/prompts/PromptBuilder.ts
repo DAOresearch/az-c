@@ -2,8 +2,8 @@
  * Prompt builder for AI evaluation
  */
 
-import type { EvaluationCriteria, EvaluationResult } from "../evaluation/types";
-import type { ScreenshotMetadata } from "../types";
+import type { ScreenshotMetadata } from "../../types";
+import type { EvaluationCriteria, EvaluationResult } from "../types";
 import {
 	COMPARISON_PROMPT_TEMPLATE,
 	EVALUATION_PROMPT_TEMPLATE,

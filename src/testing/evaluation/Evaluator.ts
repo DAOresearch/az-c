@@ -1,5 +1,5 @@
 /**
- * Visual Test Evaluator - Evaluates screenshots using AI
+ * Test Evaluator - Evaluates screenshots using AI
  */
 
 import fs from "node:fs/promises";
@@ -7,8 +7,8 @@ import path from "node:path";
 import type { SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
 import { logger } from "@/services/logger";
 import type { IAgentService } from "@/types/services";
-import { PromptBuilder } from "../prompts/PromptBuilder";
 import type { ScreenshotMetadata } from "../types";
+import { PromptBuilder } from "./prompts/PromptBuilder";
 import type {
 	EvaluationConfig,
 	EvaluationCriteria,
@@ -25,11 +25,11 @@ const DEFAULT_CRITERIA: EvaluationCriteria = {
 
 const JSON_EXTRACTION_REGEX = /\{[\s\S]*\}/;
 
-export class VisualTestEvaluator implements IVisualTestEvaluator {
+export class Evaluator implements IVisualTestEvaluator {
 	private criteria: EvaluationCriteria;
 	private readonly promptBuilder: PromptBuilder;
 	private readonly evaluatorLogger = logger.child({
-		name: "VisualTestEvaluator",
+		name: "Evaluator",
 	});
 	private readonly agentService: IAgentService;
 

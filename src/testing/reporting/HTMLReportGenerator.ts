@@ -4,10 +4,7 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type {
-	ComponentSummary,
-	TestSummary,
-} from "../evaluation/TestResultCollector";
+import type { ComponentSummary, TestSummary } from "../evaluation/Collector";
 import type { EvaluationResult } from "../evaluation/types";
 
 export type ReportConfig = {

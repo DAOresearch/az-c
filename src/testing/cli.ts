@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 
 /**
- * CLI Entry Point for Visual Test Pipeline
+ * CLI Entry Point for Test Pipeline
  */
 
-import { visualTestLogger } from "@/testing/visualTestLogger";
-import type { PipelineConfig } from "../visualTestPipeline";
-import { runVisualTestPipeline } from "../visualTestPipeline";
+import { logger } from "@/testing/logger";
+import type { PipelineConfig } from "./pipeline";
+import { runPipeline } from "./pipeline";
 
 /**
  * Parse command-line arguments
@@ -112,7 +112,7 @@ function parseArgs(): PipelineConfig {
 
 			default:
 				if (arg.startsWith("-")) {
-					visualTestLogger.warn(`Unknown option: ${arg}`);
+					logger.warn(`Unknown option: ${arg}`);
 				}
 				break;
 		}
@@ -126,10 +126,10 @@ function parseArgs(): PipelineConfig {
  */
 function printHelp(): void {
 	const helpText = `
-Visual Test AI Evaluation Pipeline
+Test AI Evaluation Pipeline
 
 Usage:
-  bun test:visual [options]
+  bun test [options]
 
 Options:
   --skip-capture          Use existing screenshots instead of capturing new ones
@@ -146,25 +146,25 @@ Options:
 
 Examples:
   # Run complete pipeline
-  bun test:visual
+  bun test
 
   # Skip capture and evaluate existing screenshots
-  bun test:visual --skip-capture
+  bun test --skip-capture
 
   # Use strict evaluation with custom output
-  bun test:visual --strict --output ./.dev/my-reports
+  bun test --strict --output ./.dev/my-reports
 
   # Evaluate with light theme
-  bun test:visual --theme light
+  bun test --theme light
 
   # Named run that won't be cleaned up
-  bun test:visual --run-name "before-refactor"
+  bun test --run-name "before-refactor"
 
   # Keep last 20 runs instead of default 10
-  bun test:visual --keep-history 20
+  bun test --keep-history 20
 `;
 
-	visualTestLogger.info(helpText);
+	logger.info(helpText);
 }
 
 /**
@@ -174,21 +174,19 @@ async function main(): Promise<void> {
 	try {
 		const config = parseArgs();
 
-		const result = await runVisualTestPipeline(config);
+		const result = await runPipeline(config);
 
 		if (result.success) {
-			visualTestLogger.success(
+			logger.success(
 				`\n✅ All tests passed! View report at: ${result.reportPath}`
 			);
 			process.exit(0);
 		}
 
-		visualTestLogger.warn(
-			`\n⚠️  Some tests failed. View report at: ${result.reportPath}`
-		);
+		logger.warn(`\n⚠️  Some tests failed. View report at: ${result.reportPath}`);
 		process.exit(1);
 	} catch (error) {
-		visualTestLogger.error("Fatal error:", error);
+		logger.error("Fatal error:", error);
 		process.exit(1);
 	}
 }

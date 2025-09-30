@@ -4,10 +4,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { glob } from "glob";
 import { logger } from "@/services/logger";
-import { captureTerminalScreenshot } from "./screenshot";
-import type { CaptureResult, ScreenshotMetadata } from "./types";
+import { FILES, PATHS } from "@/testing/config/paths";
+import type { CaptureResult, ScreenshotMetadata } from "../types";
+import { captureTerminal } from "./terminal";
 
-const SCREENSHOTS_DIR = "screenshots";
+const SCREENSHOTS_DIR = PATHS.screenshots;
 
 type ComponentSetup = {
 	scenarios: Array<{
@@ -25,20 +26,20 @@ async function saveMetadata(
 	metadata: ScreenshotMetadata[],
 	outputDir: string
 ): Promise<void> {
-	const metadataPath = path.join(outputDir, "metadata.json");
+	const metadataPath = path.join(outputDir, FILES.metadata);
 	await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 }
 
 /**
- * Visual test runner that discovers component setup files,
+ * Test runner that discovers component setup files,
  * runs each scenario in a new Terminal window, and captures screenshots.
  */
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: needed for claude
-async function runVisualTests(options?: {
+async function runCapture(options?: {
 	pattern?: string;
 }): Promise<CaptureResult> {
-	const runnerLogger = logger.child({ name: "VisualTestRunner" });
+	const runnerLogger = logger.child({ name: "CaptureRunner" });
 
 	// Ensure screenshots directory exists
 	await fs.mkdir(SCREENSHOTS_DIR, { recursive: true });
@@ -121,7 +122,7 @@ async function runVisualTests(options?: {
 
 			try {
 				// Run the spec file with the scenario index
-				await captureTerminalScreenshot({
+				await captureTerminal({
 					cmd: `SCENARIO_INDEX=${i} bun ${specFile}`,
 					out: screenshotPath,
 					width: Number.parseInt(process.env.TERMINAL_WIDTH || "900", 10),
@@ -198,10 +199,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 	const patternIndex = args.indexOf("--pattern");
 	const pattern = patternIndex >= 0 ? args[patternIndex + 1] : undefined;
 
-	runVisualTests({ pattern }).catch((err) => {
-		logger.error("Visual test runner failed", err);
+	runCapture({ pattern }).catch((err) => {
+		logger.error("Test runner failed", err);
 		process.exit(1);
 	});
 }
 
-export { runVisualTests };
+export { runCapture };

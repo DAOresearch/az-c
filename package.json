@@ -8,9 +8,9 @@
     "typecheck": "bun x tsc --noEmit",
     "check": "bun run lint && bun run typecheck",
     "dev": "bun --watch run src/index.tsx",
-    "test:visual": "bun src/testing/cli/visualTest.ts",
-    "test:visual:capture": "bun src/testing/visualTestRunner.ts",
-    "test:visual:evaluate": "bun src/testing/cli/visualTest.ts --skip-capture",
+    "test": "bun src/testing/cli.ts",
+    "test:capture": "bun src/testing/capture/runner.ts",
+    "test:evaluate": "bun src/testing/cli.ts --skip-capture",
     "clean:dev": "rm -rf .dev",
     "clean:test": "rm -rf .dev/reports .dev/screenshots"
   },

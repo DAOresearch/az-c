@@ -1,5 +1,5 @@
 import { logger } from "@/services/logger";
-import { runHarness } from "@/testing/componentHarness";
+import { renderComponent } from "@/testing/capture";
 import config from "./banner.setup";
 import { Banner, type BannerProps } from "./index";
 
@@ -13,10 +13,10 @@ if (!scenario) {
 	process.exit(1);
 }
 
-// Run the harness with the selected scenario
+// Run the renderer with the selected scenario
 const { scenarioName, description, params } = scenario;
 
-runHarness({
+renderComponent({
 	scenarioName,
 	description,
 	render: () => <Banner {...(params as BannerProps)} />,
