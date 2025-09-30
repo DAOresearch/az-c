@@ -1,4 +1,7 @@
-import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type {
+	SDKMessage,
+	SDKUserMessage,
+} from "@anthropic-ai/claude-agent-sdk";
 import { useEffect, useRef, useState } from "react";
 import { logger } from "@/services/logger";
 import type { IAgentService } from "@/types/services";
@@ -26,6 +29,7 @@ export function useAgentQuery(
 	const isStartedRef = useRef(false);
 	const sessionIdRef = useRef<string>("");
 	const hasEndedRef = useRef(false);
+	const messageIteratorRef = useRef<AsyncIterable<SDKUserMessage> | null>(null);
 
 	const start = () => {
 		// Allow restart if the previous query has ended
@@ -35,12 +39,12 @@ export function useAgentQuery(
 		setIsRunning(true);
 		setError(null);
 
-		// Start processing in background
-		// Use resume if we have a session ID and the previous query has ended
-		const resumeSessionId = hasEndedRef.current
-			? sessionIdRef.current
-			: undefined;
-		processQuery(resumeSessionId);
+		// Create iterator once on first start
+		if (!messageIteratorRef.current) {
+			messageIteratorRef.current = streamingInput.getAsyncIterator();
+		}
+
+		processQuery();
 	};
 
 	const stop = () => {
@@ -49,73 +53,47 @@ export function useAgentQuery(
 		isStartedRef.current = false;
 	};
 
-	// Handle system init messages
-	const handleSystemInit = (message: SDKMessage) => {
-		if (message.type === "system" && message.subtype === "init") {
-			logger.info(`Session initialized with ID: ${message.session_id}`);
-			sessionIdRef.current = message.session_id;
-		}
-	};
+	const handleMessage = (message: SDKMessage) => {
+		setMessages((prev) => [...prev, message]);
 
-	// Handle result messages
-	const handleResult = (message: SDKMessage): boolean => {
+		// Capture session ID from init messages
+		if (message.type === "system" && message.subtype === "init") {
+			sessionIdRef.current = message.session_id;
+			logger.info(`Session initialized with ID: ${message.session_id}`);
+		}
+
+		// Handle result messages
 		if (message.type === "result") {
 			setIsRunning(false);
 			isStartedRef.current = false;
 			hasEndedRef.current = true;
 			logger.info("Query completed. Session can be resumed for next message.");
-			return true;
 		}
-		return false;
 	};
 
-	// Process a single query iteration
-	const processQueryIteration = async (sessionId?: string) => {
-		// Get async iterator from streaming input (shares the same queue)
-		const messageIterator = streamingInput.getAsyncIterator();
-
-		// Log if we're resuming
-		if (sessionId) {
-			logger.info(`Resuming session: ${sessionId}`);
+	const processQuery = async () => {
+		if (!messageIteratorRef.current) {
+			throw new Error("Message iterator not initialized");
 		}
 
-		// Start agent query with streaming input (and optional resume)
-		const queryIterator = agentService.startQuery(messageIterator, sessionId);
+		const messageIterator = messageIteratorRef.current;
 
-		// Process each message from the agent
-		for await (const message of queryIterator) {
-			setMessages((prev) => [...prev, message]);
-			handleSystemInit(message);
+		try {
+			// Start agent query with streaming input
+			const queryIterator = agentService.startQuery(
+				messageIterator,
+				hasEndedRef.current ? sessionIdRef.current : undefined
+			);
 
-			if (handleResult(message)) {
-				return true; // Query ended
+			// Process each message from the agent
+			for await (const message of queryIterator) {
+				handleMessage(message);
 			}
-		}
-		return false; // Query didn't end normally
-	};
-
-	const processQuery = async (initialSessionId?: string) => {
-		let currentSessionId = initialSessionId;
-
-		// Keep running continuously to process messages
-		while (true) {
-			try {
-				const queryEnded = await processQueryIteration(currentSessionId);
-
-				if (queryEnded) {
-					// Use captured session ID for next iteration
-					currentSessionId = sessionIdRef.current;
-					logger.info(
-						"Query ended, will resume with session ID on next message"
-					);
-				}
-			} catch (err) {
-				logger.error("Agent query error:", err);
-				setError(err instanceof Error ? err : new Error(String(err)));
-				setIsRunning(false);
-				isStartedRef.current = false;
-				break; // Exit while loop on error
-			}
+		} catch (err) {
+			logger.error("Agent query error:", err);
+			setError(err instanceof Error ? err : new Error(String(err)));
+			setIsRunning(false);
+			isStartedRef.current = false;
 		}
 	};
 
