@@ -81,11 +81,9 @@ export function useAgentQuery(
 			`Starting query - Has session: ${hasSession}, ID: ${sessionId}`
 		);
 
-		// Create iterator ONCE on first start only (maintain session continuity)
-		if (!messageIteratorRef.current) {
-			logger.info("Creating new message iterator");
-			messageIteratorRef.current = streamingInput.getAsyncIterator();
-		}
+		// MUST create fresh iterator each time (old one is exhausted after query completes)
+		logger.info("Creating fresh message iterator for new query");
+		messageIteratorRef.current = streamingInput.getAsyncIterator();
 
 		processQuery();
 	}, [agentService, streamingInput, processQuery]);
