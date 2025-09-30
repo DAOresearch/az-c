@@ -1,7 +1,7 @@
 export const DEV_ROOT = ".dev";
 
 export const PATHS = {
-	screenshots: `${DEV_ROOT}/screenshots`,
+	screenshots: `${DEV_ROOT}/reports/screenshots`,
 	reports: `${DEV_ROOT}/reports`,
 	logs: `${DEV_ROOT}/logs`,
 } as const;
@@ -18,4 +18,5 @@ export const FILES = {
 
 export const DIRS = {
 	runs: "runs",
+	screenshots: "screenshots",
 } as const;

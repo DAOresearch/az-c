@@ -15,16 +15,19 @@ export type ReportConfig = {
 	theme: "light" | "dark";
 };
 
+export type GenerateReportOptions = {
+	summary: TestSummary;
+	componentResults: Map<string, ComponentSummary>;
+	screenshotDir: string;
+	config?: Partial<ReportConfig>;
+	screenshotBasePath?: string;
+};
+
 export type IHTMLReportGenerator = {
 	/**
 	 * Generates HTML report from test results
 	 */
-	generateReport(
-		summary: TestSummary,
-		componentResults: Map<string, ComponentSummary>,
-		screenshotDir: string,
-		config?: Partial<ReportConfig>
-	): Promise<string>;
+	generateReport(options: GenerateReportOptions): Promise<string>;
 
 	/**
 	 * Saves report to file
@@ -57,17 +60,18 @@ export class HTMLReportGenerator implements IHTMLReportGenerator {
 		this.config = { ...DEFAULT_CONFIG, ...config };
 	}
 
-	generateReport(
-		summary: TestSummary,
-		componentResults: Map<string, ComponentSummary>,
-		screenshotDir: string,
-		config?: Partial<ReportConfig>
-	): Promise<string> {
-		const finalConfig = { ...this.config, ...config };
-		const components = Array.from(componentResults.values());
+	generateReport(options: GenerateReportOptions): Promise<string> {
+		const finalConfig = { ...this.config, ...options.config };
+		const components = Array.from(options.componentResults.values());
 
 		return Promise.resolve(
-			this.buildHTML(summary, components, screenshotDir, finalConfig)
+			this.buildHTML(
+				options.summary,
+				components,
+				options.screenshotDir,
+				finalConfig,
+				options.screenshotBasePath
+			)
 		);
 	}
 
@@ -86,12 +90,20 @@ export class HTMLReportGenerator implements IHTMLReportGenerator {
 		summary: TestSummary,
 		components: ComponentSummary[],
 		screenshotDir: string,
-		config: ReportConfig
+		config: ReportConfig,
+		screenshotBasePath = "screenshots/"
 	): string {
 		const styles = this.getStyles(config.theme);
 		const summarySection = this.buildSummarySection(summary);
 		const componentSections = components
-			.map((comp) => this.buildComponentSection(comp, screenshotDir, config))
+			.map((comp) =>
+				this.buildComponentSection(
+					comp,
+					screenshotDir,
+					config,
+					screenshotBasePath
+				)
+			)
 			.join("\n");
 
 		return `<!DOCTYPE html>
@@ -167,10 +179,18 @@ export class HTMLReportGenerator implements IHTMLReportGenerator {
 	private buildComponentSection(
 		component: ComponentSummary,
 		screenshotDir: string,
-		config: ReportConfig
+		config: ReportConfig,
+		screenshotBasePath: string
 	): string {
 		const scenarioCards = component.results
-			.map((result) => this.buildScenarioCard(result, screenshotDir, config))
+			.map((result) =>
+				this.buildScenarioCard(
+					result,
+					screenshotDir,
+					config,
+					screenshotBasePath
+				)
+			)
 			.join("\n");
 
 		const passRate = (
@@ -198,14 +218,16 @@ export class HTMLReportGenerator implements IHTMLReportGenerator {
 	private buildScenarioCard(
 		result: EvaluationResult,
 		_screenshotDir: string,
-		config: ReportConfig
+		config: ReportConfig,
+		screenshotBasePath: string
 	): string {
 		const statusClass = result.passed ? "passed" : "failed";
 		const statusIcon = result.passed ? "✓" : "✗";
 		const confidence = (result.confidence * PERCENTAGE_MULTIPLIER).toFixed(0);
 
-		// Get screenshot path from result
-		const relativeScreenshotPath = `../${result.filePath}`;
+		// Get screenshot filename and create correct relative path
+		const screenshotFilename = path.basename(result.filePath);
+		const relativeScreenshotPath = `${screenshotBasePath}${screenshotFilename}`;
 
 		return `
       <div class="scenario-card ${statusClass}">

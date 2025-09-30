@@ -2,10 +2,10 @@
  * Test Pipeline - Orchestrates complete testing workflow
  */
 
-import { readFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { AgentService } from "@/services/AgentService";
-import { FILES, PATHS } from "@/testing/config/paths";
+import { DIRS, FILES, PATHS } from "@/testing/config/paths";
 import { logger } from "@/testing/logger";
 import { runCapture } from "./capture";
 import {
@@ -109,12 +109,23 @@ export async function runPipeline(
 
 		// Phase 5: Generate HTML report
 		logger.phase("📄", "Phase 5: Report Generation");
-		const html = await generator.generateReport(
+		// Generate reports with screenshots at screenshots/ (co-located with reports)
+		const latestHtml = await generator.generateReport({
 			summary,
-			collector.getAllResults(),
-			captureResult.outputDir,
-			config?.reportConfig
-		);
+			componentResults: collector.getAllResults(),
+			screenshotDir: captureResult.outputDir,
+			config: config?.reportConfig,
+			screenshotBasePath: "screenshots/",
+		});
+
+		// Generate versioned report with same screenshot path (will be co-located)
+		const versionedHtml = await generator.generateReport({
+			summary,
+			componentResults: collector.getAllResults(),
+			screenshotDir: captureResult.outputDir,
+			config: config?.reportConfig,
+			screenshotBasePath: "screenshots/",
+		});
 
 		// Phase 6: Save outputs (with versioning)
 		logger.phase("💾", "Phase 6: Save Outputs");
@@ -136,7 +147,7 @@ export async function runPipeline(
 		const latestReportPath = path.join(latestDir, FILES.reportIndex);
 		const latestJsonPath = path.join(latestDir, FILES.reportResults);
 
-		await generator.saveReport(html, latestReportPath);
+		await generator.saveReport(latestHtml, latestReportPath);
 		logger.step(`Latest report saved to: ${latestReportPath}`, {
 			completed: true,
 		});
@@ -151,9 +162,16 @@ export async function runPipeline(
 		const versionedReportPath = path.join(runDir, FILES.reportIndex);
 		const versionedJsonPath = path.join(runDir, FILES.reportResults);
 
-		await generator.saveReport(html, versionedReportPath);
+		await generator.saveReport(versionedHtml, versionedReportPath);
 		await writeFile(versionedJsonPath, collector.exportToJSON(), "utf-8");
 		logger.step(`Versioned report saved to: ${runDir}`, {
+			completed: true,
+		});
+
+		// Copy screenshots to versioned run directory
+		const versionedScreenshotsDir = path.join(runDir, DIRS.screenshots);
+		await copyDirectory(captureResult.outputDir, versionedScreenshotsDir);
+		logger.step(`Screenshots archived to: ${versionedScreenshotsDir}`, {
 			completed: true,
 		});
 
@@ -257,6 +275,23 @@ async function loadExistingScreenshots(
 		throw new Error(
 			`Failed to load existing screenshots from ${metadataPath}: ${error instanceof Error ? error.message : String(error)}`
 		);
+	}
+}
+
+/**
+ * Copies all files from source directory to target directory
+ */
+async function copyDirectory(
+	sourceDir: string,
+	targetDir: string
+): Promise<void> {
+	await mkdir(targetDir, { recursive: true });
+	const files = await readdir(sourceDir);
+
+	for (const file of files) {
+		const sourcePath = path.join(sourceDir, file);
+		const targetPath = path.join(targetDir, file);
+		await copyFile(sourcePath, targetPath);
 	}
 }
 

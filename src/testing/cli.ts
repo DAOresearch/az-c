@@ -132,9 +132,10 @@ Usage:
   bun test [options]
 
 Options:
-  --skip-capture          Use existing screenshots instead of capturing new ones
+  --skip-capture          Use existing screenshots from .dev/reports/screenshots/
   -o, --output <dir>      Output directory for reports (default: .dev/reports)
-  -s, --screenshot-dir <dir>  Screenshot directory (default: .dev/screenshots)
+  -s, --screenshot-dir <dir>  Screenshot directory (default: .dev/reports/screenshots)
+                          Note: Screenshots are automatically archived with each test run
   --strict                Use strict evaluation criteria (checks text, layout, colors)
   --moderate              Use moderate evaluation criteria (checks text, layout)
   --lenient               Use lenient evaluation criteria (checks text only)

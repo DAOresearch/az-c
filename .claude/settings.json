@@ -4,6 +4,17 @@
     "command": "npx cc-usage@latest statusline"
   },
   "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude is ready for your input\" with title \"Claude Code\" sound name \"Glass\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",

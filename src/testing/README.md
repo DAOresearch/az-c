@@ -6,14 +6,81 @@
 
 ```bash
 # Run complete pipeline
-bun test
+bun run test
 
 # Capture only
-bun test:capture
+bun run test:capture
 
 # Evaluate existing screenshots
-bun test:evaluate
+bun run test:evaluate
 ```
+
+## Directory Structure
+
+### Output Files
+
+All test outputs are stored under `.dev/reports/`:
+
+```
+.dev/
+└── reports/
+    ├── screenshots/                # Latest screenshots (working directory)
+    │   ├── banner-component-default.png
+    │   └── metadata.json
+    ├── index.html                  # Latest report
+    ├── results.json                # Latest results
+    ├── runs.json                   # Run history manifest
+    └── runs/                       # Versioned test runs (self-contained)
+        ├── 20250930_195819/
+        │   ├── index.html          # Report for this specific run
+        │   ├── results.json        # Results for this specific run
+        │   └── screenshots/        # Screenshots for this specific run
+        │       ├── banner-component-default.png
+        │       └── metadata.json
+        └── 20250930_200314/
+            ├── index.html
+            ├── results.json
+            └── screenshots/
+                ├── banner-component-default.png
+                └── metadata.json
+```
+
+**Why this structure?**
+
+✅ **Self-contained runs** - Each versioned run includes everything needed to view that test session
+✅ **Historical accuracy** - Old reports always display their original screenshots
+✅ **Fast re-evaluation** - Use `--skip-capture` with latest screenshots in `.dev/reports/screenshots/`
+✅ **No overwrites** - New test runs don't corrupt old reports
+✅ **Co-located artifacts** - All test outputs live together under `.dev/reports/`
+
+### How Screenshot Management Works
+
+When you run `bun test`, the pipeline:
+
+1. **Capture Phase**: Saves screenshots to `.dev/reports/screenshots/` (latest)
+2. **Evaluation Phase**: Reads from `.dev/reports/screenshots/` and generates results
+3. **Reporting Phase**: Generates HTML reports with paths pointing to `screenshots/`
+4. **Archival Phase**: Copies screenshots to `.dev/reports/runs/{runId}/screenshots/`
+
+**Result**: Both latest and versioned reports work correctly using the same relative paths!
+
+### Screenshot Paths in Reports
+
+The HTML reports use **relative paths** to reference screenshots:
+
+- **Latest report** (`.dev/reports/index.html`):
+  ```html
+  <img src="screenshots/banner-default.png">
+  ```
+  → Resolves to `.dev/reports/screenshots/banner-default.png`
+
+- **Versioned report** (`.dev/reports/runs/20250930_195819/index.html`):
+  ```html
+  <img src="screenshots/banner-default.png">
+  ```
+  → Resolves to `.dev/reports/runs/20250930_195819/screenshots/banner-default.png`
+
+Both use identical HTML - the difference is WHERE the report is saved.
 
 ## Architecture
 
@@ -83,12 +150,16 @@ Screenshots are evaluated using Claude AI:
 
 ### 3. Reporting Phase
 
-Generates interactive HTML reports:
+Generates interactive HTML reports with co-located screenshots:
 
 1. **Generate**: Creates HTML with screenshots, results, and AI commentary
-2. **Version**: Saves to versioned `runs/` directory + latest `index.html`
-3. **History**: Manages run history (default: keep last 10 runs)
-4. **Open**: Opens report in default browser
+2. **Save Latest**: Saves to `.dev/reports/index.html` (references `screenshots/`)
+3. **Version**: Saves to versioned `runs/{runId}/` directory with same HTML
+4. **Archive**: Copies screenshots to `runs/{runId}/screenshots/` for self-contained history
+5. **History**: Manages run history (default: keep last 10 runs)
+6. **Open**: Opens latest report in default browser
+
+Each versioned run is completely self-contained with its own copy of screenshots, ensuring old reports always display correctly.
 
 ## Component Testing Guide
 
@@ -205,7 +276,16 @@ const summary = collector.getSummary();
 import { HTMLReportGenerator, ReportManager } from "@/testing/reporting";
 
 const generator = new HTMLReportGenerator({ theme: "dark" });
-const html = await generator.generateReport(summary, results, screenshotDir);
+
+// Generate report with options object
+const html = await generator.generateReport({
+  summary,
+  componentResults: results,
+  screenshotDir,
+  config: { theme: "dark" },
+  screenshotBasePath: "screenshots/", // Relative path from report location
+});
+
 await generator.saveReport(html, "reports/index.html");
 
 const manager = new ReportManager({ baseDir: "reports", keepHistory: 10 });
@@ -231,9 +311,10 @@ SCENARIO_INDEX=0           # Which scenario to run (set by runner)
 bun test --help
 
 Options:
-  --skip-capture          Use existing screenshots
-  -o, --output <dir>      Output directory for reports
-  -s, --screenshot-dir    Screenshot directory
+  --skip-capture          Use existing screenshots from .dev/reports/screenshots/
+  -o, --output <dir>      Output directory for reports (default: .dev/reports)
+  -s, --screenshot-dir    Screenshot directory (default: .dev/reports/screenshots)
+                          Note: Screenshots are automatically archived with each test run
   --strict                Strict evaluation (text + layout + colors)
   --moderate              Moderate evaluation (text + layout)
   --lenient               Lenient evaluation (text only)
@@ -295,6 +376,38 @@ Check that:
 - Scenario definitions are valid
 - Terminal window has time to render (`SCREENSHOT_DELAY`)
 
+### Screenshots Not Loading in Reports
+
+**Symptom**: HTML report shows broken image icons instead of screenshots.
+
+**Cause**: Incorrect relative paths or viewing old reports from before screenshot co-location.
+
+**Solution**:
+1. Ensure you're using the latest version (with co-located screenshots)
+2. Run tests to generate new reports:
+   ```bash
+   bun test
+   ```
+3. Old reports (before co-location feature) may have broken links - re-run tests to fix
+
+**How to verify**: Check that versioned runs have a `screenshots/` directory:
+```bash
+ls .dev/reports/runs/20250930_195819/screenshots/
+```
+
+### Old Reports Show Wrong Screenshots
+
+**Symptom**: Viewing an old report but screenshots look different than expected.
+
+**Cause**: In versions before screenshot co-location, all runs shared `.dev/screenshots/` which got overwritten.
+
+**Solution**: Re-run tests to generate new versioned runs with co-located screenshots:
+```bash
+bun test
+```
+
+After this, each run will be self-contained with its own screenshots. Old runs from before this feature cannot be recovered.
+
 ### Evaluation Failures
 
 Common issues:
@@ -337,31 +450,31 @@ bun test --strict    # Check text + layout + colors
 ### Run Complete Pipeline
 
 ```bash
-bun test
+bun run test
 ```
 
 ### Evaluate Existing Screenshots
 
 ```bash
-bun test --skip-capture
+bun run test --skip-capture
 ```
 
 ### Strict Evaluation with Custom Output
 
 ```bash
-bun test --strict --output ./my-reports
+bun run test --strict --output ./my-reports
 ```
 
 ### Named Run (Preserved Indefinitely)
 
 ```bash
-bun test --run-name "before-refactor"
+bun run test --run-name "before-refactor"
 ```
 
 ### Keep Last 20 Runs
 
 ```bash
-bun test --keep-history 20
+bun run test --keep-history 20
 ```
 
 ## Development

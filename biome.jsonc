@@ -28,6 +28,9 @@
       },
       "performance": {
         "noBarrelFile": "off"
+      },
+      "nursery": {
+        "useMaxParams": "off"
       }
     }
   },
