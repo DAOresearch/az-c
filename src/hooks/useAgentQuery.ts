@@ -27,7 +27,6 @@ export function useAgentQuery(
 	const [isRunning, setIsRunning] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
 	const isStartedRef = useRef(false);
-	const sessionIdRef = useRef<string>("");
 	const hasEndedRef = useRef(false);
 	const messageIteratorRef = useRef<AsyncIterable<SDKUserMessage> | null>(null);
 
@@ -38,6 +37,13 @@ export function useAgentQuery(
 		isStartedRef.current = true;
 		setIsRunning(true);
 		setError(null);
+
+		// Log session state
+		const hasSession = agentService.hasActiveSession();
+		const sessionId = agentService.getSessionId();
+		logger.info(
+			`Starting query - Has session: ${hasSession}, ID: ${sessionId}`
+		);
 
 		// Create iterator once on first start
 		if (!messageIteratorRef.current) {
@@ -56,12 +62,6 @@ export function useAgentQuery(
 	const handleMessage = (message: SDKMessage) => {
 		setMessages((prev) => [...prev, message]);
 
-		// Capture session ID from init messages
-		if (message.type === "system" && message.subtype === "init") {
-			sessionIdRef.current = message.session_id;
-			logger.info(`Session initialized with ID: ${message.session_id}`);
-		}
-
 		// Handle result messages
 		if (message.type === "result") {
 			setIsRunning(false);
@@ -79,11 +79,8 @@ export function useAgentQuery(
 		const messageIterator = messageIteratorRef.current;
 
 		try {
-			// Start agent query with streaming input
-			const queryIterator = agentService.startQuery(
-				messageIterator,
-				hasEndedRef.current ? sessionIdRef.current : undefined
-			);
+			// Start agent query with streaming input - service handles session internally
+			const queryIterator = agentService.startQuery(messageIterator);
 
 			// Process each message from the agent
 			for await (const message of queryIterator) {
