@@ -7,7 +7,10 @@
     "lint": "bun x biome check --write",
     "typecheck": "bun x tsc --noEmit",
     "check": "bun run lint && bun run typecheck",
-    "dev": "bun --watch run src/index.tsx"
+    "dev": "bun --watch run src/index.tsx",
+    "test:visual": "bun src/testing/cli/visualTest.ts",
+    "test:visual:capture": "bun src/testing/visualTestRunner.ts",
+    "test:visual:evaluate": "bun src/testing/cli/visualTest.ts --skip-capture"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

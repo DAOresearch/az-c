@@ -5,6 +5,7 @@ import path from "node:path";
 import { glob } from "glob";
 import { logger } from "@/services/logger";
 import { captureTerminalScreenshot } from "./screenshot";
+import type { CaptureResult, ScreenshotMetadata } from "./types";
 
 const SCREENSHOTS_DIR = "screenshots";
 
@@ -18,12 +19,25 @@ type ComponentSetup = {
 };
 
 /**
+ * Saves screenshot metadata to a JSON file
+ */
+async function saveMetadata(
+	metadata: ScreenshotMetadata[],
+	outputDir: string
+): Promise<void> {
+	const metadataPath = path.join(outputDir, "metadata.json");
+	await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+}
+
+/**
  * Visual test runner that discovers component setup files,
  * runs each scenario in a new Terminal window, and captures screenshots.
  */
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: needed for claude
-async function runVisualTests(options?: { pattern?: string }) {
+async function runVisualTests(options?: {
+	pattern?: string;
+}): Promise<CaptureResult> {
 	const runnerLogger = logger.child({ name: "VisualTestRunner" });
 
 	// Ensure screenshots directory exists
@@ -38,7 +52,13 @@ async function runVisualTests(options?: { pattern?: string }) {
 
 	if (setupFiles.length === 0) {
 		runnerLogger.warn(`No setup files found matching ${pattern}`);
-		return;
+		return {
+			screenshots: [],
+			outputDir: SCREENSHOTS_DIR,
+			captureDate: new Date().toISOString(),
+			totalComponents: 0,
+			totalScenarios: 0,
+		};
 	}
 
 	runnerLogger.info(`Found ${setupFiles.length} component(s) to test`);
@@ -46,6 +66,7 @@ async function runVisualTests(options?: { pattern?: string }) {
 	let totalScenarios = 0;
 	let successCount = 0;
 	let failureCount = 0;
+	const allMetadata: ScreenshotMetadata[] = [];
 
 	// Process each component
 	for (const setupFile of setupFiles) {
@@ -108,6 +129,28 @@ async function runVisualTests(options?: { pattern?: string }) {
 					settleMs: Number.parseInt(process.env.SCREENSHOT_DELAY || "2000", 10),
 				});
 
+				// Get screenshot dimensions
+				const stats = await fs.stat(screenshotPath);
+				const width = Number.parseInt(process.env.TERMINAL_WIDTH || "900", 10);
+				const height = Number.parseInt(
+					process.env.TERMINAL_HEIGHT || "600",
+					10
+				);
+
+				// Create metadata entry
+				const metadata: ScreenshotMetadata = {
+					componentName,
+					scenarioName: scenario.scenarioName,
+					description: scenario.description,
+					expectation: scenario.expectation,
+					params: scenario.params,
+					filePath: screenshotPath,
+					timestamp: stats.mtime.getTime(),
+					dimensions: { width, height },
+				};
+
+				allMetadata.push(metadata);
+
 				runnerLogger.info(`  ✓ Screenshot saved: ${screenshotName}`);
 				successCount++;
 			} catch (error) {
@@ -116,6 +159,9 @@ async function runVisualTests(options?: { pattern?: string }) {
 			}
 		}
 	}
+
+	// Save metadata
+	await saveMetadata(allMetadata, SCREENSHOTS_DIR);
 
 	// Summary
 	const REPEAT_COUNT = 50;
@@ -128,11 +174,22 @@ async function runVisualTests(options?: { pattern?: string }) {
 	runnerLogger.info(`  Failed: ${failureCount}`);
 	runnerLogger.info("─".repeat(REPEAT_COUNT));
 	runnerLogger.info(`  Screenshots saved in: ${SCREENSHOTS_DIR}/`);
+	runnerLogger.info(`  Metadata saved: ${SCREENSHOTS_DIR}/metadata.json`);
 	runnerLogger.info("─".repeat(REPEAT_COUNT));
 
 	if (failureCount > 0) {
 		process.exit(1);
 	}
+
+	// Return capture result
+	const captureDate = new Date().toISOString();
+	return {
+		screenshots: allMetadata,
+		outputDir: SCREENSHOTS_DIR,
+		captureDate,
+		totalComponents: setupFiles.length,
+		totalScenarios,
+	};
 }
 
 // CLI execution
