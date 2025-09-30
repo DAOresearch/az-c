@@ -13,6 +13,7 @@ import { logger } from "./logger";
 export class AgentService implements IAgentService {
 	private abortController: AbortController | null = null;
 	private readonly config: AgentServiceConfig;
+	private sessionId: string | null = null;
 
 	constructor(config: AgentServiceConfig = {}) {
 		this.config = {
@@ -24,8 +25,7 @@ export class AgentService implements IAgentService {
 	}
 
 	async *startQuery(
-		messageIterator: AsyncIterable<SDKUserMessage>,
-		sessionId?: string
+		messageIterator: AsyncIterable<SDKUserMessage>
 	): AsyncIterable<SDKMessage> {
 		// Create new abort controller for this query
 		this.abortController = new AbortController();
@@ -41,13 +41,19 @@ export class AgentService implements IAgentService {
 					cwd: this.config.cwd,
 					abortController: this.abortController,
 					permissionMode: "bypassPermissions",
-					// Resume session if sessionId is provided
-					...(sessionId && { resume: sessionId }),
+					// Auto-resume with captured session ID
+					...(this.sessionId && { resume: this.sessionId }),
 				},
 			});
 
 			// Yield each message from the query
 			for await (const message of queryIterator) {
+				// Capture session ID from init messages
+				if (message.type === "system" && message.subtype === "init") {
+					this.sessionId = message.session_id;
+					logger.info(`Session captured by service: ${this.sessionId}`);
+				}
+
 				yield message;
 			}
 		} catch (error) {
@@ -56,6 +62,14 @@ export class AgentService implements IAgentService {
 		} finally {
 			this.abortController = null;
 		}
+	}
+
+	getSessionId(): string | null {
+		return this.sessionId;
+	}
+
+	hasActiveSession(): boolean {
+		return this.sessionId !== null;
 	}
 
 	stop(): void {
