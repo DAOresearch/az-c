@@ -79,6 +79,31 @@ function parseArgs(): PipelineConfig {
 				break;
 			}
 
+			case "--keep-history": {
+				const nextIndex = i + 1;
+				processedIndices.add(nextIndex);
+				const value = args[nextIndex];
+				if (value) {
+					config.keepHistory = Number.parseInt(value, 10);
+				}
+				break;
+			}
+
+			case "--run-name":
+			case "-n": {
+				const nextIndex = i + 1;
+				processedIndices.add(nextIndex);
+				const value = args[nextIndex];
+				if (value) {
+					config.runName = value;
+				}
+				break;
+			}
+
+			case "--skip-cleanup":
+				config.skipCleanup = true;
+				break;
+
 			case "--help":
 			case "-h":
 				printHelp();
@@ -114,6 +139,9 @@ Options:
   --moderate              Use moderate evaluation criteria (checks text, layout)
   --lenient               Use lenient evaluation criteria (checks text only)
   -t, --theme <theme>     Report theme: light or dark (default: dark)
+  --keep-history <n>      Number of test runs to keep (default: 10)
+  -n, --run-name <name>   Named run (preserved indefinitely)
+  --skip-cleanup          Skip cleanup of old runs
   -h, --help              Show this help message
 
 Examples:
@@ -128,6 +156,12 @@ Examples:
 
   # Evaluate with light theme
   bun test:visual --theme light
+
+  # Named run that won't be cleaned up
+  bun test:visual --run-name "before-refactor"
+
+  # Keep last 20 runs instead of default 10
+  bun test:visual --keep-history 20
 `;
 
 	testLogger.info(helpText);

@@ -12,6 +12,7 @@ import type { EvaluationCriteria } from "./evaluation/types";
 import { VisualTestEvaluator } from "./evaluation/VisualTestEvaluator";
 import type { ReportConfig } from "./reporting/HTMLReportGenerator";
 import { HTMLReportGenerator } from "./reporting/HTMLReportGenerator";
+import { ReportManager } from "./reporting/ReportManager";
 import type { CaptureResult } from "./types";
 import { runVisualTests } from "./visualTestRunner";
 
@@ -21,12 +22,17 @@ export type PipelineConfig = {
 	evaluationCriteria?: EvaluationCriteria;
 	reportConfig?: Partial<ReportConfig>;
 	skipScreenshots?: boolean; // Use existing screenshots
+	// History management
+	keepHistory?: number; // Number of runs to keep (default: 10)
+	runName?: string; // Optional named run (preserved indefinitely)
+	skipCleanup?: boolean; // Skip cleanup of old runs
 };
 
 export type PipelineResult = {
 	success: boolean;
 	summary: TestSummary;
 	reportPath: string;
+	runId?: string; // Timestamp-based run ID
 	errors?: Error[];
 };
 
@@ -102,19 +108,58 @@ export async function runVisualTestPipeline(
 			config?.reportConfig
 		);
 
-		// Phase 6: Save outputs
+		// Phase 6: Save outputs (with versioning)
 		testLogger.info("💾 Phase 6: Save Outputs");
 		const outputDir = config?.outputDir || DEFAULT_OUTPUT_DIR;
-		const reportPath = path.join(outputDir, "index.html");
 
-		await generator.saveReport(html, reportPath);
-		testLogger.info(`   ✓ Report saved to: ${reportPath}`);
+		// Initialize ReportManager
+		const reportManager = new ReportManager({
+			baseDir: outputDir,
+			keepHistory: config?.keepHistory,
+		});
 
-		// Save JSON results
-		const jsonPath = path.join(outputDir, "results.json");
+		// Create new versioned run
+		const { runId, runDir, latestDir } = await reportManager.createRun(
+			config?.runName
+		);
+		testLogger.info(`   ✓ Run ID: ${runId}`);
+
+		// Save to latest (always at root)
+		const latestReportPath = path.join(latestDir, "index.html");
+		const latestJsonPath = path.join(latestDir, "results.json");
+
+		await generator.saveReport(html, latestReportPath);
+		testLogger.info(`   ✓ Latest report saved to: ${latestReportPath}`);
+
 		const { writeFile } = await import("node:fs/promises");
-		await writeFile(jsonPath, collector.exportToJSON(), "utf-8");
-		testLogger.info(`   ✓ JSON results saved to: ${jsonPath}\n`);
+		await writeFile(latestJsonPath, collector.exportToJSON(), "utf-8");
+		testLogger.info(`   ✓ Latest JSON saved to: ${latestJsonPath}`);
+
+		// Save to versioned run directory
+		const versionedReportPath = path.join(runDir, "index.html");
+		const versionedJsonPath = path.join(runDir, "results.json");
+
+		await generator.saveReport(html, versionedReportPath);
+		await writeFile(versionedJsonPath, collector.exportToJSON(), "utf-8");
+		testLogger.info(`   ✓ Versioned report saved to: ${runDir}`);
+
+		// Save run metadata
+		await reportManager.saveRunMetadata({
+			runId,
+			timestamp: Date.now(),
+			name: config?.runName,
+			totalTests: summary.totalTests,
+			passed: summary.passed,
+			failed: summary.failed,
+			passRate: summary.passRate,
+			duration: summary.duration,
+		});
+		testLogger.info("   ✓ Run metadata saved\n");
+
+		// Cleanup old runs (unless explicitly skipped)
+		if (!config?.skipCleanup) {
+			await reportManager.cleanupOldRuns();
+		}
 
 		// Final summary
 		const success = summary.passRate >= PASS_RATE_THRESHOLD;
@@ -131,7 +176,8 @@ export async function runVisualTestPipeline(
 		return {
 			success,
 			summary,
-			reportPath,
+			reportPath: latestReportPath,
+			runId,
 			errors: errors.length > 0 ? errors : undefined,
 		};
 	} catch (error) {

@@ -1,0 +1,30 @@
+[
+  {
+    "runId": "20250930_183135_before-refactor",
+    "timestamp": 1759257095130,
+    "name": "before-refactor",
+    "totalTests": 1,
+    "passed": 1,
+    "failed": 0,
+    "passRate": 1,
+    "duration": 15935
+  },
+  {
+    "runId": "20250930_183102",
+    "timestamp": 1759257062364,
+    "totalTests": 1,
+    "passed": 1,
+    "failed": 0,
+    "passRate": 1,
+    "duration": 13621
+  },
+  {
+    "runId": "20250930_183027",
+    "timestamp": 1759257027258,
+    "totalTests": 1,
+    "passed": 1,
+    "failed": 0,
+    "passRate": 1,
+    "duration": 18436
+  }
+]
