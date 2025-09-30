@@ -1,5 +1,6 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { MessageRenderer } from "../messages/MessageRenderer";
+import { AgentSpinner } from "../ui/AgentSpinner";
 
 /**
  * Component to display list of messages
@@ -8,9 +9,14 @@ import { MessageRenderer } from "../messages/MessageRenderer";
 export type MessageListProps = {
 	messages: SDKMessage[];
 	height?: number | `${number}%`;
+	isAgentWorking?: boolean;
 };
 
-export function MessageList({ messages, height = "100%" }: MessageListProps) {
+export function MessageList({
+	messages,
+	height = "100%",
+	isAgentWorking = false,
+}: MessageListProps) {
 	if (messages.length === 0) {
 		return (
 			<box
@@ -19,9 +25,14 @@ export function MessageList({ messages, height = "100%" }: MessageListProps) {
 					padding: 2,
 					alignItems: "center",
 					justifyContent: "center",
+					flexDirection: "column",
 				}}
 			>
-				<text fg="#999999">Start by typing a message below...</text>
+				{isAgentWorking ? (
+					<AgentSpinner />
+				) : (
+					<text fg="#999999">Start by typing a message below...</text>
+				)}
 			</box>
 		);
 	}
@@ -54,6 +65,13 @@ export function MessageList({ messages, height = "100%" }: MessageListProps) {
 					message={message}
 				/>
 			))}
+
+			{/* Show spinner below the last message when agent is working */}
+			{isAgentWorking && (
+				<box style={{ marginLeft: 2, marginTop: 1 }}>
+					<AgentSpinner />
+				</box>
+			)}
 		</scrollbox>
 	);
 }

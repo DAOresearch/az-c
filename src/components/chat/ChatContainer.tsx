@@ -46,6 +46,15 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 		streamingInput.sendMessage(message);
 	};
 
+	// Check if agent is actively working
+	// Show spinner when agent is running and waiting for response
+	// But NOT when there are no messages (empty state)
+	const lastMessage = messages.at(-1);
+	const isWaitingForResponse =
+		lastMessage?.type === "user" || lastMessage?.type === "system";
+	const isAgentWorking =
+		isRunning && messages.length > 0 && isWaitingForResponse;
+
 	return (
 		<box
 			style={{
@@ -55,7 +64,7 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 		>
 			{/* Message list - fills screen */}
 			<box style={{ flexGrow: 1 }}>
-				<MessageList messages={messages} />
+				<MessageList isAgentWorking={isAgentWorking} messages={messages} />
 			</box>
 
 			{/* Input field - only top/bottom borders */}
