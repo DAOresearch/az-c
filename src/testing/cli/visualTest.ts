@@ -4,7 +4,7 @@
  * CLI Entry Point for Visual Test Pipeline
  */
 
-import { testLogger } from "@/services/logger";
+import { visualTestLogger } from "@/testing/visualTestLogger";
 import type { PipelineConfig } from "../visualTestPipeline";
 import { runVisualTestPipeline } from "../visualTestPipeline";
 
@@ -112,7 +112,7 @@ function parseArgs(): PipelineConfig {
 
 			default:
 				if (arg.startsWith("-")) {
-					testLogger.warn(`Unknown option: ${arg}`);
+					visualTestLogger.warn(`Unknown option: ${arg}`);
 				}
 				break;
 		}
@@ -164,7 +164,7 @@ Examples:
   bun test:visual --keep-history 20
 `;
 
-	testLogger.info(helpText);
+	visualTestLogger.info(helpText);
 }
 
 /**
@@ -177,18 +177,18 @@ async function main(): Promise<void> {
 		const result = await runVisualTestPipeline(config);
 
 		if (result.success) {
-			testLogger.info(
+			visualTestLogger.success(
 				`\n✅ All tests passed! View report at: ${result.reportPath}`
 			);
 			process.exit(0);
 		}
 
-		testLogger.warn(
+		visualTestLogger.warn(
 			`\n⚠️  Some tests failed. View report at: ${result.reportPath}`
 		);
 		process.exit(1);
 	} catch (error) {
-		testLogger.error("Fatal error:", error);
+		visualTestLogger.error("Fatal error:", error);
 		process.exit(1);
 	}
 }

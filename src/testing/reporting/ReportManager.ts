@@ -4,7 +4,7 @@
 
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { testLogger } from "@/services/logger";
+import { visualTestLogger } from "@/testing/visualTestLogger";
 
 export type RunMetadata = {
 	runId: string; // Timestamp-based ID: YYYY-MM-DD_HHMMSS
@@ -83,7 +83,7 @@ export class ReportManager {
 		// Create run directory
 		await mkdir(runDir, { recursive: true });
 
-		testLogger.info(`Created run directory: ${runDir}`);
+		visualTestLogger.indent(`Created run directory: ${runDir}`);
 
 		return { runId, runDir, latestDir };
 	}
@@ -113,7 +113,9 @@ export class ReportManager {
 		// Save updated manifest
 		await writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf-8");
 
-		testLogger.info(`Updated runs manifest with run: ${metadata.runId}`);
+		visualTestLogger.indent(
+			`Updated runs manifest with run: ${metadata.runId}`
+		);
 	}
 
 	/**
@@ -146,11 +148,11 @@ export class ReportManager {
 		const runsToDelete = regularRuns.slice(this.config.keepHistory);
 
 		if (runsToDelete.length === 0) {
-			testLogger.info("No old runs to clean up");
+			visualTestLogger.indent("No old runs to clean up");
 			return;
 		}
 
-		testLogger.info(
+		visualTestLogger.indent(
 			`Cleaning up ${runsToDelete.length} old runs (keeping ${this.config.keepHistory})`
 		);
 
@@ -159,9 +161,9 @@ export class ReportManager {
 			const runDir = path.join(runsDir, run.runId);
 			try {
 				await rm(runDir, { recursive: true, force: true });
-				testLogger.info(`Deleted old run: ${run.runId}`);
+				visualTestLogger.indent(`Deleted old run: ${run.runId}`);
 			} catch (error) {
-				testLogger.warn(`Failed to delete run ${run.runId}:`, error);
+				visualTestLogger.warn(`Failed to delete run ${run.runId}:`, error);
 			}
 		}
 
@@ -179,7 +181,7 @@ export class ReportManager {
 			"utf-8"
 		);
 
-		testLogger.info("Cleanup complete");
+		visualTestLogger.indent("Cleanup complete");
 	}
 
 	/**
@@ -209,7 +211,7 @@ export class ReportManager {
 			"utf-8"
 		);
 
-		testLogger.info(`Deleted run: ${runId}`);
+		visualTestLogger.indent(`Deleted run: ${runId}`);
 	}
 
 	/**
@@ -250,9 +252,9 @@ export class ReportManager {
 			const jsonContent = await readFile(latestJson, "utf-8");
 			await writeFile(archivedJson, jsonContent, "utf-8");
 
-			testLogger.info(`Archived run to: ${runDir}`);
+			visualTestLogger.indent(`Archived run to: ${runDir}`);
 		} catch (error) {
-			testLogger.error("Failed to archive run:", error);
+			visualTestLogger.error("Failed to archive run:", error);
 			throw error;
 		}
 	}
