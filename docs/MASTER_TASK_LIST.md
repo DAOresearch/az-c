@@ -44,11 +44,10 @@ git reset --hard HEAD
 
 ---
 
-## DESIGN SYSTEM REFERENCE
+## DESIGN SYSTEM AND COMPONENT REFERENCE
 
-All interface work must adhere to `docs/DESIGN_SYSTEM.md`. Before starting any UI task:
-
-- Review the component wireframes and state tables in the design system.
+- Review `docs/DESIGN_SYSTEM.md` before starting any UI task.
+- Use `docs/COMPONENT_TASK_LIST.md` to see required component folders, harness scenarios, and manual QA coverage.
 - Confirm colors, spacing, and copy match the defined tokens and content standards.
 - Add new wireframes to `docs/DESIGN_SYSTEM.md` before implementing unlisted components.
 

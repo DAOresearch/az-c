@@ -12,3 +12,13 @@ export const logger = winston.createLogger({
 		new winston.transports.File({ filename: "error.log", level: "error" }),
 	],
 });
+
+export const testLogger = winston.createLogger({
+	defaultMeta: { service: "test" },
+	level: "info",
+	format: combine(timestamp(), json(), prettyPrint()),
+	transports: [
+		new winston.transports.Console(),
+		new winston.transports.File({ filename: "test.log", level: "info" }),
+	],
+});
