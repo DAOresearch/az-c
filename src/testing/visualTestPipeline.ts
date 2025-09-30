@@ -5,6 +5,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { AgentService } from "@/services/AgentService";
+import { PATHS } from "@/testing/config/paths";
 import { visualTestLogger } from "@/testing/visualTestLogger";
 import type { TestSummary } from "./evaluation/TestResultCollector";
 import { TestResultCollector } from "./evaluation/TestResultCollector";
@@ -36,8 +37,8 @@ export type PipelineResult = {
 	errors?: Error[];
 };
 
-const DEFAULT_SCREENSHOT_DIR = "screenshots";
-const DEFAULT_OUTPUT_DIR = "reports";
+const DEFAULT_SCREENSHOT_DIR = PATHS.screenshots;
+const DEFAULT_OUTPUT_DIR = PATHS.reports;
 const PASS_RATE_THRESHOLD = 0.9;
 const PERCENTAGE_MULTIPLIER = 100;
 const MILLISECONDS_TO_SECONDS = 1000;
@@ -172,6 +173,11 @@ export async function runVisualTestPipeline(
 			await reportManager.cleanupOldRuns();
 		}
 
+		// Open report in browser
+		visualTestLogger.phase("🌐", "Phase 7: Opening Report");
+		await openReportInBrowser(latestReportPath);
+		visualTestLogger.step("Report opened in browser", { completed: true });
+
 		// Final summary
 		const success = summary.passRate >= PASS_RATE_THRESHOLD;
 		visualTestLogger.summary(
@@ -248,6 +254,37 @@ async function loadExistingScreenshots(
 	} catch (error) {
 		throw new Error(
 			`Failed to load existing screenshots from ${metadataPath}: ${error instanceof Error ? error.message : String(error)}`
+		);
+	}
+}
+
+/**
+ * Opens the HTML report in the default browser
+ */
+async function openReportInBrowser(reportPath: string): Promise<void> {
+	const { exec } = await import("node:child_process");
+	const { promisify } = await import("node:util");
+	const execAsync = promisify(exec);
+
+	const platform = process.platform;
+	let command: string;
+
+	if (platform === "darwin") {
+		// macOS
+		command = `open "${reportPath}"`;
+	} else if (platform === "win32") {
+		// Windows
+		command = `start "" "${reportPath}"`;
+	} else {
+		// Linux
+		command = `xdg-open "${reportPath}"`;
+	}
+
+	try {
+		await execAsync(command);
+	} catch (error) {
+		visualTestLogger.warn(
+			`Could not open browser automatically: ${error instanceof Error ? error.message : String(error)}`
 		);
 	}
 }

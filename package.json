@@ -10,7 +10,9 @@
     "dev": "bun --watch run src/index.tsx",
     "test:visual": "bun src/testing/cli/visualTest.ts",
     "test:visual:capture": "bun src/testing/visualTestRunner.ts",
-    "test:visual:evaluate": "bun src/testing/cli/visualTest.ts --skip-capture"
+    "test:visual:evaluate": "bun src/testing/cli/visualTest.ts --skip-capture",
+    "clean:dev": "rm -rf .dev",
+    "clean:test": "rm -rf .dev/reports .dev/screenshots"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

@@ -133,8 +133,8 @@ Usage:
 
 Options:
   --skip-capture          Use existing screenshots instead of capturing new ones
-  -o, --output <dir>      Output directory for reports (default: reports)
-  -s, --screenshot-dir <dir>  Screenshot directory (default: screenshots)
+  -o, --output <dir>      Output directory for reports (default: .dev/reports)
+  -s, --screenshot-dir <dir>  Screenshot directory (default: .dev/screenshots)
   --strict                Use strict evaluation criteria (checks text, layout, colors)
   --moderate              Use moderate evaluation criteria (checks text, layout)
   --lenient               Use lenient evaluation criteria (checks text only)
@@ -152,7 +152,7 @@ Examples:
   bun test:visual --skip-capture
 
   # Use strict evaluation with custom output
-  bun test:visual --strict --output ./my-reports
+  bun test:visual --strict --output ./.dev/my-reports
 
   # Evaluate with light theme
   bun test:visual --theme light
