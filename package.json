@@ -1,0 +1,24 @@
+{
+  "name": "aztec-agent",
+  "module": "src/index.tsx",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "lint": "bun x biome check --write",
+    "dev": "bun --watch run src/index.tsx"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.4",
+    "@types/bun": "latest",
+    "ultracite": "5.4.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0",
+    "@opentui/core": "^0.1.25",
+    "@opentui/react": "^0.1.25",
+    "react": "^19.1.1"
+  }
+}
