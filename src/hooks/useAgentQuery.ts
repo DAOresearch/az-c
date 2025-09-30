@@ -26,6 +26,7 @@ export function useAgentQuery(
 	const [messages, setMessages] = useState<SDKMessage[]>([]);
 	const [isRunning, setIsRunning] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
+	const isRunningRef = useRef(false);
 	const messageIteratorRef = useRef<AsyncIterable<SDKUserMessage> | null>(null);
 
 	const handleMessage = useCallback((message: SDKMessage) => {
@@ -33,6 +34,7 @@ export function useAgentQuery(
 
 		// Handle result messages
 		if (message.type === "result") {
+			isRunningRef.current = false;
 			setIsRunning(false);
 			logger.info("Query completed. Session can be resumed for next message.");
 		}
@@ -56,17 +58,19 @@ export function useAgentQuery(
 		} catch (err) {
 			logger.error("Agent query error:", err);
 			setError(err instanceof Error ? err : new Error(String(err)));
+			isRunningRef.current = false;
 			setIsRunning(false);
 		}
 	}, [agentService, handleMessage]);
 
 	const start = useCallback(() => {
-		// Allow restart if query not currently running
-		if (isRunning) {
+		// Use ref for immediate check (no race condition)
+		if (isRunningRef.current) {
 			logger.info("Query already running, ignoring start");
 			return;
 		}
 
+		isRunningRef.current = true;
 		setIsRunning(true);
 		setError(null);
 
@@ -77,16 +81,15 @@ export function useAgentQuery(
 			`Starting query - Has session: ${hasSession}, ID: ${sessionId}`
 		);
 
-		// Create iterator once on first start
-		if (!messageIteratorRef.current) {
-			messageIteratorRef.current = streamingInput.getAsyncIterator();
-		}
+		// Create NEW iterator every time we start (fixes restart issue)
+		messageIteratorRef.current = streamingInput.getAsyncIterator();
 
 		processQuery();
-	}, [isRunning, agentService, streamingInput, processQuery]);
+	}, [agentService, streamingInput, processQuery]);
 
 	const stop = useCallback(() => {
 		agentService.stop();
+		isRunningRef.current = false;
 		setIsRunning(false);
 	}, [agentService]);
 
