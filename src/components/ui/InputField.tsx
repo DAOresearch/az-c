@@ -5,11 +5,11 @@ import { useState } from "react";
  * Single Responsibility: Handle user text input
  * Interface Segregation: Simple, focused interface
  */
-export interface InputFieldProps {
+export type InputFieldProps = {
 	placeholder?: string;
 	onSubmit: (value: string) => void;
 	disabled?: boolean;
-}
+};
 
 export function InputField({
 	placeholder = "Type a message...",
@@ -28,10 +28,6 @@ export function InputField({
 	return (
 		<box
 			style={{
-				borderTop: true,
-				borderBottom: true,
-				borderLeft: false,
-				borderRight: false,
 				borderColor: disabled ? "#666666" : "#4A90E2",
 				height: 3,
 				padding: 0,

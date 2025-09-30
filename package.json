@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "lint": "bun x biome check --write",
+    "typecheck": "bun x tsc --noEmit",
+    "check": "bun run lint && bun run typecheck",
     "dev": "bun --watch run src/index.tsx"
   },
   "devDependencies": {

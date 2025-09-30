@@ -1,5 +1,5 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import type { IMessageRenderer } from "../../types/messages";
+import type { IMessageRenderer } from "@/types/messages";
 import { SystemMessageRenderer } from "./SystemMessageRenderer";
 import { TextMessageRenderer } from "./TextMessageRenderer";
 import { ToolCallMessageRenderer } from "./ToolCallMessageRenderer";

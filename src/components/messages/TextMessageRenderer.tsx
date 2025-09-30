@@ -1,5 +1,6 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import type { IMessageRenderer } from "../../types/messages";
+import type { ReactNode } from "react";
+import type { IMessageRenderer } from "@/types/messages";
 
 /**
  * Renderer for text-only messages
@@ -10,7 +11,9 @@ export class TextMessageRenderer implements IMessageRenderer {
 	canRender(message: SDKMessage): boolean {
 		if (message.type === "assistant") {
 			// Check if message has only text content (no tool calls)
-			return message.message.content.every((block) => block.type === "text");
+			return message.message.content.every(
+				(block: { type: string }) => block.type === "text"
+			);
 		}
 		if (message.type === "user") {
 			return true;
@@ -18,7 +21,7 @@ export class TextMessageRenderer implements IMessageRenderer {
 		return false;
 	}
 
-	render(message: SDKMessage, index: number): JSX.Element {
+	render(message: SDKMessage, index: number): ReactNode {
 		let text = "";
 		let role = "";
 
@@ -26,16 +29,16 @@ export class TextMessageRenderer implements IMessageRenderer {
 			role = "Assistant";
 			// Extract text from content blocks
 			text = message.message.content
-				.filter((block) => block.type === "text")
-				.map((block) => block.text)
+				.filter((block: { type: string }) => block.type === "text")
+				.map((block: { text: string }) => block.text)
 				.join("\n");
 		} else if (message.type === "user") {
 			role = "You";
 			// Handle both string and array content
 			if (Array.isArray(message.message.content)) {
 				text = message.message.content
-					.filter((block) => block.type === "text")
-					.map((block) => block.text)
+					.filter((block: { type: string }) => block.type === "text")
+					.map((block: { text: string }) => block.text)
 					.join("\n");
 			} else {
 				text = String(message.message.content);

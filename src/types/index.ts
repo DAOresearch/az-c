@@ -3,37 +3,37 @@ import type {
 	SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
 
-export interface AppState {
+export type AppState = {
 	messages: SDKMessage[];
 	input: string;
 	isProcessing: boolean;
 	sessionInfo: SessionInfo | null;
 	stats: Stats;
 	focusMode: "input" | "messages";
-	userMessageQueue: Array<() => SDKUserMessage>;
-}
+	userMessageQueue: (() => SDKUserMessage)[];
+};
 
-export interface SessionInfo {
+export type SessionInfo = {
 	sessionId: string;
 	model: string;
 	permissionMode: string;
 	cwd: string;
 	tools: string[];
-}
+};
 
-export interface Stats {
+export type Stats = {
 	tokens: number;
 	cost: number;
 	duration: number;
 	turns: number;
-}
+};
 
-export interface ToolExecution {
+export type ToolExecution = {
 	id: string;
 	name: string;
 	startTime: number;
 	input: unknown;
-}
+};
 
 export const COLORS = {
 	user: "#4A90E2",

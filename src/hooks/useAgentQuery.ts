@@ -1,19 +1,20 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { useEffect, useRef, useState } from "react";
-import type { IAgentService } from "../types/services";
+import { logger } from "@/services/logger";
+import type { IAgentService } from "@/types/services";
 import type { StreamingInputController } from "./useStreamingInput";
 
 /**
  * Hook to manage Claude Agent SDK query lifecycle
  * Single Responsibility: Manages agent query state and lifecycle
  */
-export interface UseAgentQueryResult {
+export type UseAgentQueryResult = {
 	messages: SDKMessage[];
 	isRunning: boolean;
 	error: Error | null;
 	start: () => void;
 	stop: () => void;
-}
+};
 
 export function useAgentQuery(
 	agentService: IAgentService,
@@ -52,6 +53,11 @@ export function useAgentQuery(
 			for await (const message of queryIterator) {
 				setMessages((prev) => [...prev, message]);
 
+				// Capture session_id from the first system message
+				if (message.type === "system" && message.subtype === "init") {
+					streamingInput.setSessionId(message.session_id);
+				}
+
 				// Stop if result message received
 				if (message.type === "result") {
 					setIsRunning(false);
@@ -60,7 +66,7 @@ export function useAgentQuery(
 				}
 			}
 		} catch (err) {
-			console.error("Agent query error:", err);
+			logger.error("Agent query error:", err);
 			setError(err instanceof Error ? err : new Error(String(err)));
 			setIsRunning(false);
 			isStartedRef.current = false;
@@ -68,6 +74,7 @@ export function useAgentQuery(
 	};
 
 	// Cleanup on unmount
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <cleanup on unmount>
 	useEffect(
 		() => () => {
 			stop();

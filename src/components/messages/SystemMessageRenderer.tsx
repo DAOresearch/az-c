@@ -1,6 +1,6 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { ReactNode } from "react";
-import type { IMessageRenderer } from "../../types/messages";
+import type { IMessageRenderer } from "@/types/messages";
 
 /**
  * Renderer for system messages and results

@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from "react";
-import { useAgentQuery } from "../../hooks/useAgentQuery";
-import { useStreamingInput } from "../../hooks/useStreamingInput";
-import { AgentService } from "../../services/AgentService";
-import { logger } from "../../services/logger";
-import type { IAgentService } from "../../types/services";
+import { useAgentQuery } from "@/hooks/useAgentQuery";
+import { useStreamingInput } from "@/hooks/useStreamingInput";
+import { AgentService } from "@/services/AgentService";
+import { logger } from "@/services/logger";
+import type { IAgentService } from "@/types/services";
 import { InputField } from "../ui/InputField";
 import { MessageList } from "./MessageList";
 

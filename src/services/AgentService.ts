@@ -3,7 +3,8 @@ import {
 	type SDKMessage,
 	type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
-import type { AgentServiceConfig, IAgentService } from "../types/services";
+import type { AgentServiceConfig, IAgentService } from "@/types/services";
+import { logger } from "./logger";
 
 /**
  * Concrete implementation of IAgentService using Claude Agent SDK
@@ -11,7 +12,7 @@ import type { AgentServiceConfig, IAgentService } from "../types/services";
  */
 export class AgentService implements IAgentService {
 	private abortController: AbortController | null = null;
-	private config: AgentServiceConfig;
+	private readonly config: AgentServiceConfig;
 
 	constructor(config: AgentServiceConfig = {}) {
 		this.config = {
@@ -47,7 +48,7 @@ export class AgentService implements IAgentService {
 				yield message;
 			}
 		} catch (error) {
-			console.error("Agent query error:", error);
+			logger.error("Agent query error:", error);
 			throw error;
 		} finally {
 			this.abortController = null;
