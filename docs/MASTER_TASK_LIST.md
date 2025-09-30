@@ -46,10 +46,11 @@ git reset --hard HEAD
 
 ## 📊 PROGRESS TRACKER
 
-### Phase 1: Critical Fixes ⬜ (0/3 complete)
-- ⬜ Task 1.1: Fix Input Blocking Bug (0/3 subtasks)
-- ⬜ Task 1.2: Move Session Management to Service (0/4 subtasks)
-- ⬜ Task 1.3: Remove Redundant State (0/2 subtasks)
+### Phase 1: Critical Fixes ✅ (4/4 complete)
+- ✅ Task 1.1: Fix Input Blocking Bug (3/3 subtasks)
+- ✅ Task 1.2: Move Session Management to Service (4/4 subtasks)
+- ✅ Task 1.3: Remove Redundant State (2/2 subtasks)
+- ✅ Task 1.4: Display User Messages in Chat (1/1 subtasks)
 
 ### Phase 2: Architecture Improvements ⬜ (0/3 complete)
 - ⬜ Task 2.1: Add Tool Result Support (0/4 subtasks)
@@ -61,7 +62,7 @@ git reset --hard HEAD
 - ⬜ Task 3.2: Refactor ChatContainer (0/3 subtasks)
 - ⬜ Task 3.3: Improve Type Safety (0/3 subtasks)
 
-**Total Progress: 0/27 subtasks complete**
+**Total Progress: 10/28 subtasks complete**
 
 ---
 
@@ -909,6 +910,133 @@ git reset --hard HEAD~1
 
 ---
 
+## 🔴 TASK 1.4: Display User Messages in Chat
+
+**Problem**: User messages are not displayed in the chat UI. Only assistant messages show up, making the conversation one-sided and confusing.
+
+**Root Cause**: The SDK's `queryIterator` only yields messages FROM the agent (assistant, system, result). User messages flow INTO the SDK but are never yielded back out. The `useAgentQuery` hook only adds messages from the query iterator to state.
+
+**Files Affected**: `src/components/chat/ChatContainer.tsx`, `src/hooks/useAgentQuery.ts`
+
+**Estimated Time**: 15 minutes
+
+---
+
+### Subtask 1.4.1: Add User Messages to Chat ⬜
+
+**What I'll Do**:
+- Expose a method from `useAgentQuery` to manually add user messages
+- Call this method from `ChatContainer` when user submits a message
+- Display user messages with optimistic UI update
+
+**File Changes**:
+
+**1. Update `src/hooks/useAgentQuery.ts`**:
+```typescript
+// Add method to manually add user message to display
+const addUserMessage = useCallback((content: string) => {
+  const userMessage: SDKMessage = {
+    type: "user",
+    session_id: agentService.getSessionId() || "",
+    message: {
+      role: "user",
+      content: [{ type: "text", text: content }],
+    },
+    parent_tool_use_id: null,
+  };
+  setMessages((prev) => [...prev, userMessage]);
+}, [agentService]);
+
+// Return in hook result
+return {
+  messages,
+  isRunning,
+  error,
+  start,
+  stop,
+  addUserMessage, // NEW
+};
+```
+
+**2. Update `src/components/chat/ChatContainer.tsx`**:
+```typescript
+// Get addUserMessage from hook
+const { messages, isRunning, error, start, addUserMessage } = useAgentQuery(
+  service,
+  streamingInput
+);
+
+// Update handleSubmit
+const handleSubmit = (message: string) => {
+  if (!message.trim()) return;
+  logger.info(`Submitting message: ${message}, isRunning: ${isRunning}`);
+
+  // Add user message to UI immediately (optimistic update)
+  addUserMessage(message);
+
+  // Send to SDK
+  streamingInput.sendMessage(message);
+
+  // If the query isn't running, restart it
+  if (!isRunning) {
+    logger.info("Query not running, restarting...");
+    start();
+  }
+};
+```
+
+**Git Commit**:
+```bash
+git add src/hooks/useAgentQuery.ts src/components/chat/ChatContainer.tsx
+git commit -m "feat: Display user messages in chat UI
+
+- Add addUserMessage method to useAgentQuery hook
+- Optimistically add user message to UI when submitted
+- Fixes one-sided conversation display issue"
+```
+
+**🧪 HUMAN TEST SCENARIO**:
+
+**Setup**:
+```bash
+bun run dev
+```
+
+**Test Steps**:
+1. Type message: "hello"
+2. Press Enter
+3. **VERIFY**: See "You: hello" appear immediately
+4. Wait for assistant response
+5. **VERIFY**: See "Assistant: [response]"
+6. Type second message: "how are you"
+7. Press Enter
+8. **VERIFY**: See "You: how are you" appear
+9. **VERIFY**: Both user and assistant messages visible
+
+**✅ Success Criteria**:
+- ✅ User messages appear immediately when sent
+- ✅ Assistant messages appear when received
+- ✅ Both roles visible in chat (You: and Assistant:)
+- ✅ Conversation flow is clear and easy to follow
+
+**❌ Failure Signs**:
+- ❌ Only assistant messages visible
+- ❌ User messages delayed or missing
+- ❌ Duplicate user messages
+
+**Rollback**:
+```bash
+git reset --hard HEAD~1
+```
+
+**Report Back**: "✅ PASS - User messages visible!" or "❌ FAIL: [what happened]"
+
+---
+
+⏸️ **AGENT PAUSES HERE - WAITING FOR TEST RESULT**
+
+---
+
 ## 🎉 PHASE 1 COMPLETE VERIFICATION
 
 Before moving to Phase 2, let's verify all Phase 1 fixes:
@@ -935,6 +1063,7 @@ bun run dev
 - ✅ Input never blocks (Issue #1 fixed)
 - ✅ Session managed by service (Issue #2 fixed)
 - ✅ Single state source (Issue #3 fixed)
+- ✅ User messages displayed in chat (Issue #4 fixed)
 - ✅ App stable and responsive
 - ✅ No errors or crashes
 
