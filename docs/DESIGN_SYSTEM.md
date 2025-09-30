@@ -228,51 +228,166 @@ Error
 ### 3.7 InputField
 - **Props**: `placeholder`, `onSubmit`, `disabled`, `defaultValue?`, `onChange?` (for controlled use cases).
 - **States**: idle, focused, disabled, validation error.
+- **Visual Reference**: `context/active/component_screenshots/user-input-command.png`
+
+#### Border Specification (Terminal UX Optimization)
+- **Border placement**: TOP and BOTTOM only (horizontal lines)
+- **No side borders**: Enables easy text selection and copy/paste
+- **Border character**: `─` (box-drawing horizontal, U+2500)
+- **Border colors**:
+  - Idle: `#4a4a4a` (color.border.inactive)
+  - Focused: `#4A90E2` (color.border.focus)
+  - Disabled: `#666666` (color.border.disabled)
 
 ```
-Idle
-+--------------------------------------------------------------+
-| > Type your message and press Enter...                       |
-+--------------------------------------------------------------+
+Idle (horizontal borders only)
+─────────────────────────────────────────────
+> Type your message and press Enter...
+─────────────────────────────────────────────
 
-Focused
-+==============================================================+
-| > Type your message and press Enter...                       |
-+==============================================================+
+Focused (border color changes to blue)
+─────────────────────────────────────────────
+> Type your message and press Enter|
+─────────────────────────────────────────────
 
 Disabled
-+--------------------------------------------------------------+
-| x Processing...                                              |
-+--------------------------------------------------------------+
+─────────────────────────────────────────────
+x Processing...
+─────────────────────────────────────────────
 
 Error
-+--------------------------------------------------------------+
-| ! Message cannot be empty                                    |
-+--------------------------------------------------------------+
+─────────────────────────────────────────────
+! Message cannot be empty
+─────────────────────────────────────────────
 ```
 
-Legend: `=` indicates active border using `color.border.focus`, `x` prefix confirms disabled, `!` prefix marks validation error.
+**Implementation Note**: The absence of vertical borders (left/right) is intentional. This allows users to easily select text without the cursor catching on border characters, improving the terminal copy/paste experience.
 
 ### 3.8 AgentSpinner
-- **Props**: `label?`, `ariaLabel` equivalent for accessibility logs.
-- **States**: default (random phrase), deterministic (supply label), paused.
+- **Props**: `state: SpinnerState`, `onInterrupt?`, `metadata?`
+- **States**: thinking, levitating
+- **Visual Reference**: `context/active/component_screenshots/levitating-spinner-status.png`, `thinking-status-messages.png`
 
+#### State Specifications
+
+**Thinking State** (simple, fast operations):
 ```
-Default
-[spinner] brewing some magic...
+∴ Thinking…
 
-Deterministic
-[spinner] generating summary...
-
-Paused (should switch to ellipsis so it reads as complete)
-...
+Excellent! The subagent provided a comprehensive analysis.
 ```
 
-Implementation detail: the actual frames come from the braille spinner array in `AgentSpinner`; provide ASCII fallbacks for terminals that cannot render them.
+**Levitating State** (long-running operations with metadata):
+```
+∴ Levitating… (esc to interrupt · 130s · ↓ 6.7k tokens)
+```
 
-Ensure the spinner never exceeds 40 characters to avoid wrapping.
+#### Visual Tokens
+- Spinner icon: `∴` (braille pattern, or use braille animation frames)
+- Active color: `#E07A5F` (orange/rust) - indicates agent is working
+- Metadata color: `#999999` (text.secondary)
+- Message color: `#FFFFFF` (primary) or `#999999` (secondary)
 
-### 3.9 Status Banner (optional footer)
+#### Metadata Format
+- Pattern: `(action hint · {elapsed}s · ↓ {tokens}k tokens)`
+- Components:
+  - Action hint: `esc to interrupt` (user control)
+  - Elapsed time: Updates every second
+  - Token usage: `↓ {N}k tokens` (downward arrow indicates consumption)
+
+#### Implementation Details
+- Spinner frames: Braille characters for smooth animation (4-8 frames, 120ms interval)
+- ASCII fallback: Use `∴` or `.` if terminal lacks braille support
+- Width limit: Full metadata line should not exceed 80 characters
+- Auto-collapse: Switch to thinking state if operation completes quickly (<3s)
+
+### 3.9 TodoList
+- **Role**: Display hierarchical task list with progress tracking
+- **Props**: `tasks: TodoItem[]`, `title`, `onToggle?`, `collapsible`, `hints?`
+- **States**: tasks can be pending, in_progress, or completed
+- **Visual Reference**: `context/active/component_screenshots/todo-task-list-with-analysis.png`
+
+#### Tree Structure Format
+```
+✱ Analyzing testing infrastructure implementation… (esc to interrupt · ctrl+t to hide todos)
+  ├─ ☒ Identify all documentation files (CLAUDE.md, README.md, .md files)
+  ├─ ☐ Analyze testing infrastructure implementation files
+  ├─ ☐ Cross-reference documentation against actual implementation
+  ├─ ☐ Evaluate TDD workflow readiness and documentation gaps
+  └─ ☐ Compile recommendations for documentation updates and restructuring
+```
+
+#### Character Set
+- Root bullet: `✱` (U+2731, eight-pointed star)
+- Tree branch: `├─` (intermediate items), `└─` (last item)
+- Checkbox unchecked: `☐` (U+2610)
+- Checkbox checked: `☒` (U+2612)
+
+#### Color Tokens
+- Title/root: `#E07A5F` (orange/rust) - active task indicator
+- Completed text: `#666666` with strikethrough decoration
+- Pending text: `#FFFFFF` (primary)
+- In-progress text: `#4A90E2` (blue) - optional state indicator
+- Metadata/hints: `#999999` (secondary)
+
+#### Layout Rules
+- Root indent: 0 spaces
+- Child indent: 2 spaces from parent
+- Branch chars: 2 characters + 1 space = 3 char width
+- Checkbox: 1 character + 1 space
+- Tree alignment: All text aligns at same column after checkboxes
+
+#### Interactive Hints
+- Format: `(action · ctrl+key to action)`
+- Examples: `(esc to interrupt · ctrl+t to hide todos)`
+- Always displayed in secondary color after title
+
+### 3.10 CollapsibleTask
+- **Role**: Display tool execution or detailed task info with expand/collapse
+- **Props**: `title`, `content`, `metadata?`, `defaultExpanded`, `expandHint?`
+- **States**: collapsed, expanded
+- **Visual Reference**: `context/active/component_screenshots/task-deep-analysis-collapsed.png`
+
+#### Collapsed State
+```
+● Task(Deep analysis of testing implementation)
+  └─ Read 24 lines (ctrl+o to expand)
+      "scripts": {
+        "lint": "bun x biome check --write",
+        "typecheck": "bun x tsc --noEmit",
+      … +8 lines (ctrl+o to expand)
+      +25 more tool uses
+```
+
+#### Expanded State
+```
+● Task(Deep analysis of testing implementation)
+  └─ Read 24 lines
+      {full content displayed here}
+      {all lines visible}
+      +25 more tool uses
+```
+
+#### Visual Tokens
+- Bullet: `●` (U+25CF, filled circle) in `#CCCCCC` (light gray)
+- Title: `Task(...)` format in `#FFFFFF`
+- Tree branch: `└─` for content
+- Truncation indicator: `… +N lines` in `#666666`
+- Metadata: `+N more tool uses` in `#999999`
+
+#### Truncation Rules
+- Show first 3-5 lines of content when collapsed
+- Add `… +N lines (ctrl+o to expand)` after preview
+- Count and display additional metadata (tool uses, etc.)
+- Preserve indentation in preview lines
+
+#### Implementation Notes
+- Default to collapsed for long content (>10 lines)
+- Expand hint: `(ctrl+o to expand)` or configurable
+- Metadata should be clickable/expandable separately
+- Maintain tree structure alignment when expanded
+
+### 3.11 Status Banner (optional footer)
 - **Use case**: Display connection status, shortcut hints, or environment labels.
 
 ```
@@ -296,8 +411,24 @@ Connected - CTRL+C to exit - CTRL+L to clear
 - [ ] Components expose all states listed in §3.
 - [ ] Input and spinner respect width and character limits.
 - [ ] New components add wireframes back to this document.
-- [ ] Master task list references this document for design alignment.
+- [ ] Component task list references this document for design alignment.
+- [ ] Screenshot tests validate visual specifications (see `src/testing/README.md`).
+- [ ] Visual references link to actual screenshots in `context/active/component_screenshots/`.
+
+## 7. Screenshot Testing Integration
+All components should be validated against their visual references using the AI-evaluated screenshot testing system:
+
+1. Create `component.setup.ts` with scenarios matching design system states
+2. Create `component.spec.tsx` that renders using `renderComponent()`
+3. Run `bun test` to capture screenshots and evaluate against expectations
+4. Ensure >90% AI confidence score for visual compliance
+5. Reference: See `src/testing/README.md` for complete testing workflow
+
+**Example Expectation (from InputField):**
+```typescript
+expectation: "Input field with horizontal borders only (top and bottom), no side borders. Shows '> Type here' prompt with blue border when focused."
+```
 
 ---
 
-_Last updated: 2025-09-30_
+_Last updated: 2025-09-30 (Screenshot specifications added)_
