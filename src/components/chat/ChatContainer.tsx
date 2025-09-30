@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useAgentQuery } from "../../hooks/useAgentQuery";
 import { useStreamingInput } from "../../hooks/useStreamingInput";
 import { AgentService } from "../../services/AgentService";
+import { logger } from "../../services/logger";
 import type { IAgentService } from "../../types/services";
 import { InputField } from "../ui/InputField";
 import { MessageList } from "./MessageList";
@@ -11,10 +12,10 @@ import { MessageList } from "./MessageList";
  * Single Responsibility: Coordinate chat UI and agent interaction
  * Dependency Inversion: Depends on IAgentService abstraction
  */
-export interface ChatContainerProps {
+export type ChatContainerProps = {
 	agentService?: IAgentService;
 	title?: string;
-}
+};
 
 export function ChatContainer({ agentService }: ChatContainerProps) {
 	// Use provided service or create default
@@ -31,6 +32,8 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 		service,
 		streamingInput
 	);
+
+	if (error) logger.error(error);
 
 	// Auto-start the agent query on mount
 	useEffect(() => {

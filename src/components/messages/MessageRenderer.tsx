@@ -5,36 +5,30 @@ import { TextMessageRenderer } from "./TextMessageRenderer";
 import { ToolCallMessageRenderer } from "./ToolCallMessageRenderer";
 
 /**
- * Message renderer factory using Chain of Responsibility pattern
- * Open/Closed Principle: Add new renderers without modifying this class
+ * Message renderer registry using Chain of Responsibility pattern
+ * Open/Closed Principle: Add new renderers without modifying this module
  * Single Responsibility: Only responsible for delegating to appropriate renderer
  */
-export class MessageRendererFactory {
-	private static renderers: IMessageRenderer[] = [
-		new ToolCallMessageRenderer(),
-		new TextMessageRenderer(),
-		new SystemMessageRenderer(),
-	];
+const renderers: IMessageRenderer[] = [
+	new ToolCallMessageRenderer(),
+	new TextMessageRenderer(),
+	new SystemMessageRenderer(),
+];
 
-	/**
-	 * Get appropriate renderer for a message
-	 * Returns first renderer that can handle the message
-	 */
-	static getRenderer(message: SDKMessage): IMessageRenderer | null {
-		return (
-			MessageRendererFactory.renderers.find((renderer) =>
-				renderer.canRender(message)
-			) || null
-		);
-	}
+/**
+ * Get appropriate renderer for a message
+ * Returns first renderer that can handle the message
+ */
+export function getRenderer(message: SDKMessage): IMessageRenderer | null {
+	return renderers.find((renderer) => renderer.canRender(message)) || null;
+}
 
-	/**
-	 * Register a custom renderer
-	 * Allows extension without modification (OCP)
-	 */
-	static registerRenderer(renderer: IMessageRenderer): void {
-		MessageRendererFactory.renderers.unshift(renderer);
-	}
+/**
+ * Register a custom renderer
+ * Allows extension without modification (OCP)
+ */
+export function registerRenderer(renderer: IMessageRenderer): void {
+	renderers.unshift(renderer);
 }
 
 /**
@@ -44,15 +38,17 @@ export class MessageRendererFactory {
 export function MessageRenderer({
 	message,
 	index,
+	key,
 }: {
 	message: SDKMessage;
 	index: number;
+	key: string;
 }) {
-	const renderer = MessageRendererFactory.getRenderer(message);
+	const renderer = getRenderer(message);
 
 	if (!renderer) {
 		return (
-			<box style={{ padding: 1, marginBottom: 1 }}>
+			<box key={key} style={{ padding: 1, marginBottom: 1 }}>
 				<text fg="#E74C3C">Unknown message type</text>
 			</box>
 		);

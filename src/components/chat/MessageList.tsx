@@ -5,10 +5,10 @@ import { MessageRenderer } from "../messages/MessageRenderer";
  * Component to display list of messages
  * Single Responsibility: Display messages in a scrollable container
  */
-export interface MessageListProps {
+export type MessageListProps = {
 	messages: SDKMessage[];
-	height?: number | string;
-}
+	height?: number | `${number}%`;
+};
 
 export function MessageList({ messages, height = "100%" }: MessageListProps) {
 	if (messages.length === 0) {
@@ -48,7 +48,11 @@ export function MessageList({ messages, height = "100%" }: MessageListProps) {
 			}}
 		>
 			{messages.map((message, index) => (
-				<MessageRenderer index={index} key={`msg-${index}`} message={message} />
+				<MessageRenderer
+					index={index}
+					key={`msg-${index}-${message.session_id}`}
+					message={message}
+				/>
 			))}
 		</scrollbox>
 	);

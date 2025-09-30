@@ -1,4 +1,5 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { ReactNode } from "react";
 import type { IMessageRenderer } from "../../types/messages";
 
 /**
@@ -11,7 +12,7 @@ export class SystemMessageRenderer implements IMessageRenderer {
 		return message.type === "system" || message.type === "result";
 	}
 
-	render(message: SDKMessage, index: number): JSX.Element {
+	render(message: SDKMessage, index: number): ReactNode {
 		// Skip system init messages - they're noise
 		if (message.type === "system" && message.subtype === "init") {
 			return <box key={`msg-${index}`} />;
