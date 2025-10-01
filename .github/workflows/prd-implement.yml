@@ -1,0 +1,198 @@
+name: PRD Implementation
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: prd-implementation-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  implement-prd:
+    # Only run if:
+    # 1. Comment contains "@claude implement"
+    # 2. Issue has "prd" label
+    # 3. Issue has "prd:ready" label (ready for implementation)
+    if: |
+      github.event.issue &&
+      contains(github.event.comment.body, '@claude implement') &&
+      contains(github.event.issue.labels.*.name, 'prd') &&
+      contains(github.event.issue.labels.*.name, 'prd:ready')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup git identity
+        run: |
+          git config --global user.email "claude[bot]@users.noreply.github.com"
+          git config --global user.name "claude[bot]"
+
+      - name: Create implementation branch
+        id: branch
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_TITLE=$(echo "${{ github.event.issue.title }}" |
+            sed 's/PRD: //gi' |              # Remove "PRD:" case-insensitive
+            tr '[:upper:]' '[:lower:]' |     # Lowercase
+            sed 's/[^a-z0-9-]/-/g' |         # Replace non-alphanumeric with dash
+            sed 's/--*/-/g' |                # Collapse consecutive dashes
+            sed 's/^-//;s/-$//' |            # Trim leading/trailing dashes
+            cut -c1-50)                      # Limit to 50 chars
+
+          # Fallback if empty after sanitization
+          if [ -z "$ISSUE_TITLE" ]; then
+            ISSUE_TITLE="issue"
+          fi
+
+          BRANCH_NAME="prd-${ISSUE_NUMBER}-${ISSUE_TITLE}"
+
+          git checkout -b "$BRANCH_NAME"
+          git push -u origin "$BRANCH_NAME"
+
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Update issue label to implementing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ steps.branch.outputs.issue_number }},
+              name: 'prd:ready'
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ steps.branch.outputs.issue_number }},
+              labels: ['prd:implementing']
+            });
+
+      - name: Implement PRD with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Enable progress tracking for visibility
+          track_progress: true
+
+          prompt: |
+            REPOSITORY: ${{ github.repository }}
+            ISSUE NUMBER: ${{ github.event.issue.number }}
+            BRANCH: ${{ steps.branch.outputs.branch_name }}
+            BASE BRANCH: ${{ github.event.repository.default_branch }}
+
+            A PRD (Product Requirements Document) has been requested for implementation.
+
+            ## Your Task
+
+            Implement the PRD specified in issue #${{ github.event.issue.number }}.
+
+            ## Process
+
+            1. **Read the PRD**:
+               - Check if PRD file exists: `PRDs/${{ github.event.issue.number }}-*.md`
+               - If not found, extract PRD content from the issue body
+
+            2. **Analyze the PRD**:
+               - Identify complexity tier (Tier 1/2/3)
+               - Review all implementation phases
+               - Note success criteria
+               - Identify all files to create/modify
+
+            3. **Implement systematically**:
+               - Follow the implementation phases in order
+               - Create/modify files as specified
+               - Follow the project's CLAUDE.md style guidelines
+               - Run tests after each significant change
+               - Fix any errors that occur
+
+            4. **Track progress**:
+               - Use TodoWrite tool to track implementation tasks
+               - Mark tasks complete as you finish them
+               - Provide clear progress updates
+
+            5. **Create Pull Request**:
+               - When implementation is complete and tests pass
+               - Use `gh pr create` to create a draft PR
+               - Link PR to issue #${{ github.event.issue.number }}
+               - Include summary of changes
+               - Reference the PRD in PR description
+
+            6. **Final update**:
+               - Comment on issue with PR link
+               - Summarize what was implemented
+               - Note any deviations from PRD (if any)
+
+            ## Important Notes
+
+            - Follow the PRD's implementation phases exactly
+            - Respect the project's code style (see CLAUDE.md)
+            - Ensure all tests pass before creating PR
+            - If you encounter blockers, comment on the issue and add "prd:blocked" label
+            - The PR should be a draft initially for review
+
+          # Allow full toolset for implementation
+          claude_args: |
+            --model claude-sonnet-4-5-20250929
+            --allowed-tools "Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(bun:*),Bash(gh:*),TodoWrite"
+
+      - name: Handle implementation failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Revert label to blocked state
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ github.event.issue.number }},
+                name: 'prd:implementing'
+              });
+            } catch (e) {
+              // Label might not exist, continue
+              console.log('Could not remove prd:implementing label:', e.message);
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              labels: ['prd:blocked']
+            });
+
+            // Notify user with error details
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              body: `❌ **PRD Implementation Failed**
+
+**Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+The implementation encountered an error. Please check the workflow logs above for details.
+
+**Next Steps:**
+1. Review error logs in the workflow run
+2. Fix any blockers or issues
+3. Remove \`prd:blocked\` label
+4. Add \`prd:ready\` label back
+5. Comment \`@claude implement\` to retry
+
+This issue has been automatically labeled as \`prd:blocked\` to prevent further implementation attempts until resolved.`
+            });
