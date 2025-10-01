@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
+export type AgentSpinnerProps = {
+	tokensUsed?: number;
+	tokensMax?: number;
+};
+
 // Animation timing constants
 const TYPEWRITER_DELAY_MS = 80;
 const SPINNER_ROTATION_DELAY_MS = 80;
@@ -35,7 +40,10 @@ const getRandomPhrase = (): string => {
 	return workingPhrases[index] ?? workingPhrases[0]; // Fallback to first phrase if somehow undefined
 };
 
-export const AgentSpinner = () => {
+export const AgentSpinner = ({
+	tokensUsed: _tokensUsed,
+	tokensMax: _tokensMax,
+}: AgentSpinnerProps) => {
 	const [phrase] = useState<string>(getRandomPhrase());
 	const [displayText, setDisplayText] = useState("");
 	const [spinnerIndex, setSpinnerIndex] = useState(0);

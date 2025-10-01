@@ -1,6 +1,6 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import { AgentSpinner } from "../agent-spinner";
 import { MessageRenderer } from "../messages/MessageRenderer";
-import { AgentSpinner } from "../ui/AgentSpinner";
 
 /**
  * Component to display list of messages
