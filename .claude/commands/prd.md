@@ -2,7 +2,7 @@
 description: Generate smart PRD adapted to task complexity
 argument-hint: <topic-description> [--issue] [--auto]
 allowed-tools: Read, Write, Glob, Grep, Bash, Task, WebFetch, WebSearch
-model: claude-opus-4-20250514
+model: claude-sonnet-4-5-20250929
 thinking:
   enabled: true
   budget: tokens

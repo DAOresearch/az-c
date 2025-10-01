@@ -148,7 +148,7 @@ jobs:
 
           # Allow full toolset for implementation
           claude_args: |
-            --model claude-opus-4-20250514
+            --model claude-sonnet-4-5-20250929
             --allowed-tools "Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(bun:*),Bash(gh:*),TodoWrite"
 
       - name: Handle implementation failure
