@@ -8,11 +8,19 @@ export type RenderScenario = {
 	render: () => ReactNode;
 };
 
+type RenderComponentHook = (scenario: RenderScenario) => Promise<void> | void;
+
+let renderHook: RenderComponentHook | null = null;
+
+export function setRenderComponentHook(hook: RenderComponentHook | null): void {
+	renderHook = hook;
+}
+
 /**
  * Minimal renderer to display a single scenario at a time.
  * Logs instructions then mounts the provided React element using @opentui/react.
  */
-export function renderComponent({
+export async function renderComponent({
 	scenarioName,
 	description,
 	render: mount,
@@ -21,6 +29,11 @@ export function renderComponent({
 
 	logger.info({ Scenario: scenarioName });
 	logger.info({ Expectation: description });
+
+	if (renderHook) {
+		await renderHook({ scenarioName, description, render: mount });
+		return;
+	}
 
 	render(mount());
 }

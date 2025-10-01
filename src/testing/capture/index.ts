@@ -3,7 +3,7 @@
  */
 
 export type { RenderScenario } from "./renderer";
-export { renderComponent } from "./renderer";
+export { renderComponent, setRenderComponentHook } from "./renderer";
 export { runCapture } from "./runner";
 export type {
 	TerminalCaptureAdapter,
