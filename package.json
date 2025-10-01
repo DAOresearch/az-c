@@ -10,7 +10,8 @@
     "check": "bun run lint:summary && bun run typecheck",
     "dev": "bun --watch run src/index.tsx",
     "test": "bun src/testing/cli.ts",
-    "test:capture": "bun src/testing/capture/runner.ts",
+    "test:capture": "bun src/testing/capture/runner.ts ",
+    "test:capture:spinner": "SCREENSHOT_DELAY=5000 bun src/testing/capture/runner.ts --pattern src/components/agent-spinner/agent-spinner.setup.ts && bun run test:evaluate",
     "test:evaluate": "bun src/testing/cli.ts --skip-capture",
     "clean:dev": "rm -rf .dev",
     "clean:test": "rm -rf .dev/reports .dev/screenshots"
