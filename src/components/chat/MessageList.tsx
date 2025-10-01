@@ -10,12 +10,16 @@ export type MessageListProps = {
 	messages: SDKMessage[];
 	height?: number | `${number}%`;
 	isAgentWorking?: boolean;
+	tokensUsed?: number;
+	tokensMax?: number;
 };
 
 export function MessageList({
 	messages,
 	height = "100%",
 	isAgentWorking = false,
+	tokensUsed,
+	tokensMax,
 }: MessageListProps) {
 	if (messages.length === 0) {
 		return (
@@ -29,7 +33,7 @@ export function MessageList({
 				}}
 			>
 				{isAgentWorking ? (
-					<AgentSpinner />
+					<AgentSpinner tokensMax={tokensMax} tokensUsed={tokensUsed} />
 				) : (
 					<text fg="#999999">Start by typing a message below...</text>
 				)}
@@ -68,7 +72,7 @@ export function MessageList({
 			{/* Show spinner below the last message when agent is working */}
 			{isAgentWorking && (
 				<box style={{ marginLeft: 2, marginTop: 1 }}>
-					<AgentSpinner />
+					<AgentSpinner tokensMax={tokensMax} tokensUsed={tokensUsed} />
 				</box>
 			)}
 		</scrollbox>

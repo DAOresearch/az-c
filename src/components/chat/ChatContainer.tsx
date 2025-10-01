@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useAgentQuery } from "@/hooks/useAgentQuery";
 import { useStreamingInput } from "@/hooks/useStreamingInput";
+import { useTokenUsage } from "@/hooks/useTokenUsage";
 import { AgentService } from "@/services/AgentService";
 import { logger } from "@/services/logger";
 import type { IAgentService } from "@/types/services";
@@ -32,6 +33,9 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 		service,
 		streamingInput
 	);
+
+	// Track token usage from messages
+	const tokenUsage = useTokenUsage(messages);
 
 	if (error) logger.error(error);
 
@@ -72,7 +76,12 @@ export function ChatContainer({ agentService }: ChatContainerProps) {
 		>
 			{/* Message list - fills screen */}
 			<box style={{ flexGrow: 1 }}>
-				<MessageList isAgentWorking={isAgentWorking} messages={messages} />
+				<MessageList
+					isAgentWorking={isAgentWorking}
+					messages={messages}
+					tokensMax={tokenUsage?.tokensMax}
+					tokensUsed={tokenUsage?.tokensUsed}
+				/>
 			</box>
 
 			{/* Input field - only top/bottom borders */}

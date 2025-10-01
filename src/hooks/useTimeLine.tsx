@@ -1,11 +1,17 @@
-import { engine, Timeline, type TimelineOptions } from "@opentui/core";
-import { useEffect } from "react";
+import { createTimeline, engine, type TimelineOptions } from "@opentui/core";
+import { useEffect, useMemo } from "react";
 
 export const useTimeline = (options: TimelineOptions = {}) => {
-	const timeline = new Timeline(options);
+	// Create a single Timeline instance for the component's lifetime
+	// biome-ignore lint/correctness/useExhaustiveDependencies: options is intentionally omitted to create a stable timeline instance that persists for the component's lifetime
+	const timeline = useMemo(() => createTimeline(options), []);
+
+	// Destructure autoplay to include in dependencies
+	const { autoplay = true } = options;
 
 	useEffect(() => {
-		if (!options.autoplay) {
+		// Autoplay by default unless explicitly disabled
+		if (autoplay) {
 			timeline.play();
 		}
 
@@ -15,7 +21,7 @@ export const useTimeline = (options: TimelineOptions = {}) => {
 			timeline.pause();
 			engine.unregister(timeline);
 		};
-	}, [options.autoplay, timeline]);
+	}, [timeline, autoplay]);
 
 	return timeline;
 };
