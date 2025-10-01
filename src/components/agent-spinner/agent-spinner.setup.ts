@@ -1,12 +1,8 @@
+import type { ComponentScenario } from "@/testing/types";
 import type { AgentSpinnerProps } from "./index";
 
 // Type-safe scenario configuration
-export type AgentSpinnerScenario = {
-	scenarioName: string;
-	description: string;
-	expectation: string;
-	params: AgentSpinnerProps;
-};
+export type AgentSpinnerScenario = ComponentScenario<AgentSpinnerProps>;
 
 const config = {
 	scenarios: [
@@ -18,6 +14,10 @@ const config = {
 			params: {
 				tokensUsed: 10_200,
 				tokensMax: 200_000,
+			},
+			animation: {
+				duration: 400,
+				screenshots: 5,
 			},
 		},
 		{

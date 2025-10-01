@@ -6,7 +6,9 @@
 import { logger } from "@/services/logger";
 import { BrowserTerminalAdapter } from "./adapters/browser";
 import { MacOSTerminalAdapter } from "./adapters/macos";
+import { OpenTUITestAdapter } from "./adapters/opentui";
 import type {
+	AnimationCaptureOptions,
 	TerminalCaptureAdapter,
 	TerminalCaptureOptions,
 } from "./adapters/types";
@@ -16,7 +18,11 @@ import type {
  */
 function getAdapter(): TerminalCaptureAdapter {
 	// Try adapters in order of preference
-	const adapters = [new MacOSTerminalAdapter(), new BrowserTerminalAdapter()];
+	const adapters = [
+		new OpenTUITestAdapter(),
+		new MacOSTerminalAdapter(),
+		new BrowserTerminalAdapter(),
+	];
 
 	for (const adapter of adapters) {
 		if (adapter.isSupported()) {
@@ -52,6 +58,22 @@ export function captureTerminal(
 	}
 
 	return adapterInstance.capture(options);
+}
+
+export function captureTerminalAnimation(
+	options: AnimationCaptureOptions
+): Promise<void> {
+	if (!adapterInstance) {
+		adapterInstance = getAdapter();
+	}
+
+	if (!adapterInstance.captureAnimation) {
+		throw new Error(
+			`${adapterInstance.getName()} does not support animation capture`
+		);
+	}
+
+	return adapterInstance.captureAnimation(options);
 }
 
 /**

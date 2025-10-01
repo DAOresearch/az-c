@@ -5,18 +5,18 @@ import path from "node:path";
 import { glob } from "glob";
 import { logger } from "@/services/logger";
 import { FILES, PATHS } from "@/testing/config/paths";
-import type { CaptureResult, ScreenshotMetadata } from "../types";
-import { captureTerminal } from "./terminal";
+import type {
+	CaptureResult,
+	ComponentScenario,
+	ScenarioAnimationConfig,
+	ScreenshotMetadata,
+} from "../types";
+import { captureTerminal, captureTerminalAnimation } from "./terminal";
 
 const SCREENSHOTS_DIR = PATHS.screenshots;
 
 type ComponentSetup = {
-	scenarios: Array<{
-		scenarioName: string;
-		description: string;
-		expectation: string;
-		params: Record<string, unknown>;
-	}>;
+	scenarios: ComponentScenario[];
 };
 
 /**
@@ -113,46 +113,107 @@ async function runCapture(options?: {
 			totalScenarios++;
 
 			// Generate screenshot filename
-			const screenshotName = `${componentName}-${scenario.scenarioName
+			const scenarioSlug = scenario.scenarioName
 				.toLowerCase()
-				.replace(/\s+/g, "-")}.png`;
-			const screenshotPath = path.join(SCREENSHOTS_DIR, screenshotName);
+				.replace(/\s+/g, "-");
+			const baseFilename = `${componentName}-${scenarioSlug}`;
+			const screenshotPath = path.join(SCREENSHOTS_DIR, `${baseFilename}.png`);
 
 			runnerLogger.info(`  Running: ${scenario.scenarioName}`);
 
 			try {
-				// Run the spec file with the scenario index
-				await captureTerminal({
-					cmd: `SCENARIO_INDEX=${i} bun ${specFile}`,
-					out: screenshotPath,
-					width: Number.parseInt(process.env.TERMINAL_WIDTH || "900", 10),
-					height: Number.parseInt(process.env.TERMINAL_HEIGHT || "600", 10),
-					settleMs: Number.parseInt(process.env.SCREENSHOT_DELAY || "2000", 10),
-				});
-
-				// Get screenshot dimensions
-				const stats = await fs.stat(screenshotPath);
 				const width = Number.parseInt(process.env.TERMINAL_WIDTH || "900", 10);
 				const height = Number.parseInt(
 					process.env.TERMINAL_HEIGHT || "600",
 					10
 				);
+				const settleMs = Number.parseInt(
+					process.env.SCREENSHOT_DELAY || "2000",
+					10
+				);
 
-				// Create metadata entry
-				const metadata: ScreenshotMetadata = {
-					componentName,
-					scenarioName: scenario.scenarioName,
-					description: scenario.description,
-					expectation: scenario.expectation,
-					params: scenario.params,
-					filePath: screenshotPath,
-					timestamp: stats.mtime.getTime(),
-					dimensions: { width, height },
-				};
+				const animationConfig: ScenarioAnimationConfig | undefined =
+					scenario.animation;
 
-				allMetadata.push(metadata);
+				if (
+					animationConfig &&
+					Number.isFinite(animationConfig.duration) &&
+					animationConfig.screenshots > 0
+				) {
+					await captureTerminalAnimation({
+						cmd: `SCENARIO_INDEX=${i} bun ${specFile}`,
+						out: `${path.join(SCREENSHOTS_DIR, `${baseFilename}_frame_0.png`)}`,
+						width,
+						height,
+						settleMs,
+						baseFilename: path.join(SCREENSHOTS_DIR, baseFilename),
+						animation: animationConfig,
+					});
 
-				runnerLogger.info(`  ✓ Screenshot saved: ${screenshotName}`);
+					for (
+						let frameIndex = 0;
+						frameIndex < animationConfig.screenshots;
+						frameIndex++
+					) {
+						const framePath = path.join(
+							SCREENSHOTS_DIR,
+							`${baseFilename}_frame_${frameIndex}.png`
+						);
+						const stats = await fs.stat(framePath);
+
+						const metadata: ScreenshotMetadata = {
+							componentName,
+							scenarioName: scenario.scenarioName,
+							description: scenario.description,
+							expectation: scenario.expectation,
+							params: scenario.params,
+							filePath: framePath,
+							timestamp: stats.mtime.getTime(),
+							dimensions: { width, height },
+							animation: {
+								duration: animationConfig.duration,
+								frameCount: animationConfig.screenshots,
+								frameIndex,
+								timestamp:
+									(animationConfig.duration /
+										Math.max(animationConfig.screenshots - 1, 1)) *
+									frameIndex,
+							},
+						};
+
+						allMetadata.push(metadata);
+					}
+
+					runnerLogger.info(
+						`  ✓ Captured animation frames: ${animationConfig.screenshots}`
+					);
+				} else {
+					await captureTerminal({
+						cmd: `SCENARIO_INDEX=${i} bun ${specFile}`,
+						out: screenshotPath,
+						width,
+						height,
+						settleMs,
+					});
+
+					const stats = await fs.stat(screenshotPath);
+
+					const metadata: ScreenshotMetadata = {
+						componentName,
+						scenarioName: scenario.scenarioName,
+						description: scenario.description,
+						expectation: scenario.expectation,
+						params: scenario.params,
+						filePath: screenshotPath,
+						timestamp: stats.mtime.getTime(),
+						dimensions: { width, height },
+					};
+
+					allMetadata.push(metadata);
+
+					runnerLogger.info(`  ✓ Screenshot saved: ${baseFilename}.png`);
+				}
+
 				successCount++;
 			} catch (error) {
 				runnerLogger.error(`  ✗ Failed: ${scenario.scenarioName}`, error);
