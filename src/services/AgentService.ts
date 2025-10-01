@@ -73,9 +73,15 @@ export class AgentService implements IAgentService {
 	}
 
 	stop(): void {
-		if (this.abortController) {
-			this.abortController.abort();
-			this.abortController = null;
+		const controller = this.abortController;
+		if (!controller) {
+			return;
 		}
+
+		if (typeof (controller as { abort?: unknown }).abort === "function") {
+			(controller as { abort: (reason?: unknown) => void }).abort();
+		}
+
+		this.abortController = null;
 	}
 }
