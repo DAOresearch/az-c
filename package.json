@@ -5,8 +5,9 @@
   "private": true,
   "scripts": {
     "lint": "bun x biome check --write",
+    "lint:summary": "bun x biome check --write --reporter=summary",
     "typecheck": "bun x tsc --noEmit",
-    "check": "bun run lint && bun run typecheck",
+    "check": "bun run lint:summary && bun run typecheck",
     "dev": "bun --watch run src/index.tsx",
     "test": "bun src/testing/cli.ts",
     "test:capture": "bun src/testing/capture/runner.ts",

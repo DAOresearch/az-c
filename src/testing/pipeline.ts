@@ -14,11 +14,7 @@ import {
 	Evaluator,
 	type TestSummary,
 } from "./evaluation";
-import {
-	HTMLReportGenerator,
-	type ReportConfig,
-	ReportManager,
-} from "./reporting";
+import { type ReportConfig, ReportGenerator, ReportManager } from "./reporting";
 import type { CaptureResult } from "./types";
 
 export type PipelineConfig = {
@@ -76,7 +72,7 @@ export async function runPipeline(
 				: undefined
 		);
 		const collector = new Collector();
-		const generator = new HTMLReportGenerator(config?.reportConfig);
+		const generator = new ReportGenerator(config?.reportConfig);
 		logger.step("Services initialized", { completed: true });
 
 		// Phase 3: Evaluate all screenshots
