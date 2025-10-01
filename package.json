@@ -14,7 +14,10 @@
     "test:capture:spinner": "SCREENSHOT_DELAY=5000 bun src/testing/capture/runner.ts --pattern src/components/agent-spinner/agent-spinner.setup.ts && bun run test:evaluate",
     "test:evaluate": "bun src/testing/cli.ts --skip-capture",
     "clean:dev": "rm -rf .dev",
-    "clean:test": "rm -rf .dev/reports .dev/screenshots"
+    "clean:test": "rm -rf .dev/reports .dev/screenshots",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
@@ -24,6 +27,7 @@
     "node-pty": "^1.0.0",
     "playwright": "^1.55.1",
     "ultracite": "5.4.5",
+    "vitepress": "^1.6.4",
     "winston": "^3.18.1",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0"
