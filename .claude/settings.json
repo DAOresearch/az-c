@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run .claude/scripts/lint.ts",
+            "command": "bun run check",
             "timeout": 30
           }
         ]
