@@ -4,11 +4,14 @@ on:
   issue_comment:
     types: [created]
 
+concurrency:
+  group: prd-implementation-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
   issues: write
-  id-token: write
 
 jobs:
   implement-prd:
@@ -40,7 +43,19 @@ jobs:
         id: branch
         run: |
           ISSUE_NUMBER=${{ github.event.issue.number }}
-          ISSUE_TITLE=$(echo "${{ github.event.issue.title }}" | sed 's/PRD: //g' | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-')
+          ISSUE_TITLE=$(echo "${{ github.event.issue.title }}" |
+            sed 's/PRD: //gi' |              # Remove "PRD:" case-insensitive
+            tr '[:upper:]' '[:lower:]' |     # Lowercase
+            sed 's/[^a-z0-9-]/-/g' |         # Replace non-alphanumeric with dash
+            sed 's/--*/-/g' |                # Collapse consecutive dashes
+            sed 's/^-//;s/-$//' |            # Trim leading/trailing dashes
+            cut -c1-50)                      # Limit to 50 chars
+
+          # Fallback if empty after sanitization
+          if [ -z "$ISSUE_TITLE" ]; then
+            ISSUE_TITLE="issue"
+          fi
+
           BRANCH_NAME="prd-${ISSUE_NUMBER}-${ISSUE_TITLE}"
 
           git checkout -b "$BRANCH_NAME"
@@ -90,7 +105,7 @@ jobs:
             ## Process
 
             1. **Read the PRD**:
-               - Check if PRD file exists: `context/active/PRD-${{ github.event.issue.number }}-*.md`
+               - Check if PRD file exists: `PRDs/${{ github.event.issue.number }}-*.md`
                - If not found, extract PRD content from the issue body
 
             2. **Analyze the PRD**:
@@ -135,3 +150,49 @@ jobs:
           claude_args: |
             --model claude-opus-4-20250514
             --allowed-tools "Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(bun:*),Bash(gh:*),TodoWrite"
+
+      - name: Handle implementation failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Revert label to blocked state
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ github.event.issue.number }},
+                name: 'prd:implementing'
+              });
+            } catch (e) {
+              // Label might not exist, continue
+              console.log('Could not remove prd:implementing label:', e.message);
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              labels: ['prd:blocked']
+            });
+
+            // Notify user with error details
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              body: `❌ **PRD Implementation Failed**
+
+**Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+The implementation encountered an error. Please check the workflow logs above for details.
+
+**Next Steps:**
+1. Review error logs in the workflow run
+2. Fix any blockers or issues
+3. Remove \`prd:blocked\` label
+4. Add \`prd:ready\` label back
+5. Comment \`@claude implement\` to retry
+
+This issue has been automatically labeled as \`prd:blocked\` to prevent further implementation attempts until resolved.`
+            });

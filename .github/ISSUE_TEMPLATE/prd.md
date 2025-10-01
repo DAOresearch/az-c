@@ -63,9 +63,10 @@ Claude will:
 1. Assess complexity (Tier 1-3)
 2. Research the codebase
 3. Generate adaptive PRD (200-1500+ lines)
-4. Save to `context/active/PRD-{issue-number}-{topic}.md`
+4. Save to `PRDs/{issue-number}-{topic}.md`
 5. Update this issue with the PRD link
-6. Change label to `prd:ready` ✅
+
+**⚠️ IMPORTANT:** After reviewing the PRD, you must **manually change** the label from `prd:draft` → `prd:ready` to enable implementation. This safety gate prevents accidental implementation of draft PRDs.
 
 ---
 

@@ -597,8 +597,8 @@ After generating the PRD, present a summary to the user:
 - {Other sections included}
 
 ### File Path:
-Will be saved to: `context/active/PRD-{topic}.md`
-{If --issue: "And GitHub issue will be created"}
+Will be saved to: `PRDs/{issue-number}-{topic}.md`
+{If --issue: "And GitHub issue will be created with this PRD"}
 
 ---
 
@@ -735,17 +735,17 @@ If user requests changes:
 3. Generate kebab-case filename: `PRD-{topic}.md`
 
 **If NO `--issue` flag:**
-- Save to: `context/active/PRD-{kebab-case-topic}.md`
+- Save to: `PRDs/{issue-number}-{kebab-case-topic}.md`
 - Confirm save location to user
 - **IF INTERACTIVE:** Thank user and provide next steps
 
 **If `--issue` flag present:**
-- Save to: `context/active/PRD-{kebab-case-topic}.md` (for reference)
+- Save to: `PRDs/{issue-number}-{kebab-case-topic}.md` (for reference)
 - Create GitHub issue by executing (use Bash tool with `gh` command):
   ```bash
   gh issue create \
     --title "PRD: {Topic Title}" \
-    --body-file context/active/PRD-{topic}.md \
+    --body-file PRDs/{issue-number}-{topic}.md \
     --label "prd,prd:draft"
   ```
 - Parse the issue number from output
@@ -777,7 +777,7 @@ Apply these practices when generating PRD content:
 
 **Universal (All Tiers):**
 - [ ] Complexity tier declared and justified
-- [ ] PRD saved to `context/active/PRD-{topic}.md`
+- [ ] PRD saved to `PRDs/{issue-number}-{topic}.md`
 - [ ] If `--issue` flag: GitHub issue created with prd labels
 - [ ] File references use `file.ts:10-50` format
 - [ ] Clear, actionable implementation guidance
